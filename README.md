@@ -18,6 +18,16 @@ vep
 WGSA08.class
 work
 
+## set ip
+
+`sh init.sh`
+
+download WSGA.class
+download annotation resources 
+from [http://web.corral.tacc.utexas.edu/WGSAdownload/](http://web.corral.tacc.utexas.edu/WGSAdownload/)
+
+and install annovar20180416, vep and snpeff. See [url](https://sites.google.com/site/jpopgen/wgsa/setting-up-wgsa-linux)
+
 ## annotation resources
 
 * resources (very large)
@@ -51,7 +61,7 @@ scripts
 
 * slurm
 
-see to scripts/sbatch.temp
+see scripts/sbatch.temp
 
 ## temporary files will put in 
 tmp
@@ -61,5 +71,5 @@ work
 ## for running a new job
 
 1. mkdir in input folder and put all input vcf files in it
-2. modify run_work.sh e.g. 
+2. modify run_work.sh e.g. run_work.dbSNP.sh
 3. sh run_work.sh
