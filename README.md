@@ -1,22 +1,26 @@
 # repo 1
 
+repo for running WSGA on HPCC
+
+refer to /home/pmd-01/zhuliu/WGSA_08
+
 ## directory structure
 
-annovar20180416
-configs
-htslib
-input
-README.md
-res
-resources
-run_work.sh
-scripts
-slurm
-snpeff
-tmp
-vep
-WGSA08.class
-work
+* annovar20180416
+* configs
+* htslib
+* input
+* README.md
+* res
+* resources
+* run_work.sh
+* scripts
+* slurm
+* snpeff
+* tmp
+* vep
+* WGSA08.class
+* work
 
 ## set ip
 
