@@ -1,0 +1,20 @@
+---------- Begin SLURM Prolog ----------
+Job ID:        8250021
+Username:      zhuliu
+Accountname:   lc_pdt
+Name:          1.sbatch
+Partition:     thomas
+Nodelist:      hpc3328
+TasksPerNode:  1
+CPUsPerTask:   1
+TMPDIR:        /tmp/8250021.thomas
+SCRATCHDIR:    /staging/scratch/8250021
+Cluster:       uschpc
+HSDA Account:  false
+---------- 2020-08-19 15:17:46 ---------
+Notice: Licenses are needed for commercial usage of software ANNOVAR and resources CADD, GenoCanyon, GenoSkyline-Plus, LINSIGHT, Polyphen2, REVEL and VEST4 (in dbNSFP).
+Notice: WGSA pipeline is provided AS IS. No warranties.
+Type "Understand" to proceed; "Exit" to exit
+Preparing input files ...
+Number of SNV:1000 Number of indel:0
+Pipeline written to ./configs/new_job/1.config.txt.sh

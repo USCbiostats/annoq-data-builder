@@ -1,0 +1,11 @@
+mkdir annovar20180416
+mkdir configs
+mkdir htslib
+mkdir input
+mkdir res
+mkdir resources
+mkdir slurm
+mkdir snpeff
+mkdir tmp
+mkdir vep
+mkdir work

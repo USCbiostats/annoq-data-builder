@@ -1,10 +1,11 @@
-# repo 1
+# Data Admin
 
-repo for running WSGA on HPCC
 
-refer to /home/pmd-01/zhuliu/WGSA_08
 
-## directory structure
+## WGSA 08
+repo for running WGSA on HPC
+
+### directory structure
 
 * annovar20180416
 * configs
@@ -22,11 +23,13 @@ refer to /home/pmd-01/zhuliu/WGSA_08
 * WGSA08.class
 * work
 
-## set ip
+### set
+
+`cd wgsa_08`
 
 `sh init.sh`
 
-download WSGA.class
+download WGSA.class
 download annotation resources 
 from [http://web.corral.tacc.utexas.edu/WGSAdownload/](http://web.corral.tacc.utexas.edu/WGSAdownload/)
 
