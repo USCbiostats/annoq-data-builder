@@ -83,6 +83,7 @@ work
 
 ## Running Decode Pickle for visualization 
 
+'pip install -r requirements.txt
 `cd tools`
 
 Take a look in scripts/run_decode-pickle.sh and add files accordingly outside the repo
