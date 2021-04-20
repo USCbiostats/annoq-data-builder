@@ -1,0 +1,103 @@
+import argparse
+import csv
+import json
+from typing import List
+from intervaltree import IntervalTree, Interval
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-p', '--pep_fasta')
+parser.add_argument('-i', '--idmapping')
+parser.add_argument('-j', '--json', action='store_const', const=True, help="Output intervals as list using as_json()")
+
+# python3 tools/coord_to_intervaltree.py -p Homo_sapiens.GRCh38.pep.all.fa -i UP000005640_9606.idmapping > parsed_coords.tsv
+
+class PantherInterval:
+    def __init__(self, ensembl_id, chr_num, start, end, strand, hgnc_id=None):
+        self.interval = Interval(begin=start, end=end)
+        self.ensembl_id = ensembl_id
+        self.chr_num = chr_num
+        self.start = start
+        self.end = end
+        self.strand = strand
+        self.hgnc_id = hgnc_id
+
+    def as_json(self):
+        cd = [
+            self.ensembl_id,
+            [
+                self.chr_num,
+                self.start,
+                self.end,
+                self.strand
+            ]
+        ]
+        if self.hgnc_id:
+            cd.append(self.hgnc_id)
+        return cd
+
+    @classmethod
+    def parse_header(cls, header_str: str):
+        header_bits = header_str.split()
+        coordinates = header_bits[2]
+        field_name, build_name, chr_num, start, end, strand = coordinates.split(":", maxsplit=5)
+        gene_id = header_bits[3]
+        field_name, ensembl_id = gene_id.split(":", maxsplit=1)
+        ensembl_id = ensembl_id.split(".", maxsplit=1)[0]
+        # Get HGNC ID
+        hgnc_id = None
+        if ensembl_id in ensembl_to_uniprot and ensembl_to_uniprot[ensembl_id] in uniprot_to_hgnc:
+            hgnc_id = uniprot_to_hgnc.get(ensembl_to_uniprot[ensembl_id])
+        return cls(ensembl_id, chr_num, int(start), int(end), strand, hgnc_id)
+
+    def __str__(self):
+        hgnc_id = ""
+        if self.hgnc_id:
+            hgnc_id = self.hgnc_id
+        return "\t".join([self.ensembl_id, self.chr_num, str(self.start), str(self.end), self.strand, hgnc_id])
+
+
+class PantherIntervalTree:
+    def __init__(self):
+        self.interval_tree = IntervalTree()
+        self.intervals: List[PantherInterval] = []
+
+    def add_interval(self, interval: PantherInterval):
+        self.interval_tree.add(interval.interval)
+        self.intervals.append(interval)
+
+    def __iter__(self):
+        return iter(self.intervals)
+
+
+ensembl_to_uniprot = {}
+uniprot_to_hgnc = {}
+if __name__ == "__main__":
+    args = parser.parse_args()
+
+    with open(args.idmapping) as idf:
+        reader = csv.reader(idf, delimiter="\t")
+        for r in reader:
+            if r[1] == "Ensembl":
+                ensemble_id = r[2]
+                uniprot_id = r[0]
+                ensembl_to_uniprot[ensemble_id] = uniprot_id
+            elif r[1] == "HGNC":
+                hgnc_id = r[2]
+                uniprot_id = r[0]
+                uniprot_to_hgnc[uniprot_id] = hgnc_id
+
+    itree = PantherIntervalTree()
+    with open(args.pep_fasta) as ff:
+        # Get chr, start, end, Ensembl ID
+        # >ENSP00000484065.1 pep:known chromosome:GRCh38:22:42140205:42144577:-1 gene:ENSG00000205702.10 transcript:ENST00000612115.1 gene_biotype:polymorphic_pseudogene transcript_biotype:protein_coding gene_symbol:CYP2D7 description:cytochrome P450 family 2 subfamily D member 7 (gene/pseudogene) [Source:HGNC Symbol;Acc:HGNC:2624]
+        for l in ff.readlines():
+            if l.startswith(">"):
+                pthr_interval = PantherInterval.parse_header(l)
+                itree.add_interval(pthr_interval)
+
+    if args.json:
+        interval_jsons = [i.as_json() for i in itree]
+        print(json.dumps(interval_jsons))
+    else:
+        [print(i) for i in itree]

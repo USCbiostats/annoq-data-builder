@@ -92,5 +92,39 @@ Then run
 
 `sh scripts/run_decode-pickle.sh`
 
-
-
+## Running tools/coord_to_intervaltree.py
+The `coord_to_intervaltree.py` script contains wrapper classes for `IntervalTree` and `Interval` objects: `PantherIntervalTree` and `PantherInterval`. You can quickly extract TSV and JSON formatted coordinates given a HUMAN peptide FASTA `--pep_fasta` file and Reference Proteome HUMAN ID mapping `--idmapping` file:
+```
+wget ftp://ftp.ensembl.org/pub/release-80/fasta/homo_sapiens/pep/Homo_sapiens.GRCh38.pep.all.fa.gz
+wget ftp://ftp.ebi.ac.uk/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Eukaryota/UP000005640/UP000005640_9606.idmapping.gz
+gunzip Homo_sapiens.GRCh38.pep.all.fa.gz
+gunzip UP000005640_9606.idmapping.gz
+python3 tools/coord_to_intervaltree.py -p Homo_sapiens.GRCh38.pep.all.fa -i UP000005640_9606.idmapping > parsed_coords.tsv
+python3 tools/coord_to_intervaltree.py -p Homo_sapiens.GRCh38.pep.all.fa -i UP000005640_9606.idmapping --json > parsed_coords.json
+```
+### Example output
+TSV:
+```
+ENSG00000228985 14      22449113        22449125        1
+ENSG00000223997 14      22438547        22438554        1       HGNC:12254
+ENSG00000282253 CHR_HSCHR7_2_CTG6       142847306       142847317       1       HGNC:12158
+```
+JSON:
+```
+[
+    [
+        "ENSG00000228985",
+        ["14", 22449113, 22449125, "1"]
+    ],
+    [
+        "ENSG00000223997",
+        ["14", 22438547, 22438554, "1"],
+        "HGNC:12254"
+    ],
+    [
+        "ENSG00000282253",
+        ["CHR_HSCHR7_2_CTG6", 142847306, 142847317, "1"],
+        "HGNC:12158"
+    ],
+]
+```
