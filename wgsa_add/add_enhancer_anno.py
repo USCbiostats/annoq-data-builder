@@ -56,4 +56,5 @@ def add_anno(f ,deal_res=print):
         deal_res(add_record(r, add_cols))
 
 import fileinput
+
 add_anno(fileinput.input(), lambda x: print(x.rstrip()))

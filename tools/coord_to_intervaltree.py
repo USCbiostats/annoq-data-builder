@@ -1,16 +1,21 @@
 import argparse
 import csv
 import json
+from decode_pickle import write_to_pickle
+from decode_pickle import write_to_json
 from typing import List
 from intervaltree import IntervalTree, Interval
+from collections import defaultdict
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-p', '--pep_fasta')
 parser.add_argument('-i', '--idmapping')
-parser.add_argument('-j', '--json', action='store_const', const=True, help="Output intervals as list using as_json()")
+parser.add_argument('-j', '--json', action='store_const',
+                    const=True, help="Output intervals as list using as_json()")
 
 # python3 tools/coord_to_intervaltree.py -p Homo_sapiens.GRCh38.pep.all.fa -i UP000005640_9606.idmapping > parsed_coords.tsv
+
 
 class PantherInterval:
     def __init__(self, ensembl_id, chr_num, start, end, strand, hgnc_id=None):
@@ -40,7 +45,8 @@ class PantherInterval:
     def parse_header(cls, header_str: str):
         header_bits = header_str.split()
         coordinates = header_bits[2]
-        field_name, build_name, chr_num, start, end, strand = coordinates.split(":", maxsplit=5)
+        field_name, build_name, chr_num, start, end, strand = coordinates.split(
+            ":", maxsplit=5)
         gene_id = header_bits[3]
         field_name, ensembl_id = gene_id.split(":", maxsplit=1)
         ensembl_id = ensembl_id.split(".", maxsplit=1)[0]
@@ -70,8 +76,25 @@ class PantherIntervalTree:
         return iter(self.intervals)
 
 
+def add_flanking_region(interval: PantherInterval, annoq_tree):
+    flanking_regions = [0, 1e4, 2e4]
+    if not interval.hgnc_id:
+        return
+
+    for flanking_region in flanking_regions:
+        if not annoq_tree[flanking_region][interval.chr_num][interval.strand]:
+            annoq_tree[flanking_region][interval.chr_num][interval.strand] = IntervalTree()
+
+        annoq_interval = Interval(begin=interval.start - flanking_region,
+                                  end=interval.end + flanking_region,
+                                  data=interval.hgnc_id)
+        annoq_tree[flanking_region][interval.chr_num][interval.strand].add(
+            annoq_interval)
+
+
 ensembl_to_uniprot = {}
 uniprot_to_hgnc = {}
+
 if __name__ == "__main__":
     args = parser.parse_args()
 
@@ -101,3 +124,11 @@ if __name__ == "__main__":
         print(json.dumps(interval_jsons))
     else:
         [print(i) for i in itree]
+
+    def nested_dict(): return defaultdict(nested_dict)
+    annoq_tree = nested_dict()
+    for i in itree:
+        add_flanking_region(i, annoq_tree)
+
+    write_to_json(annoq_tree, "outfile_temp_3.json")
+    write_to_pickle(annoq_tree, "outfile_pickle.pkl")

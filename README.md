@@ -90,7 +90,7 @@ Take a look in scripts/run_decode-pickle.sh and add files accordingly outside th
 
 Then run
 
-`sh scripts/run_decode-pickle.sh`
+`sh scripts/run_decode_pickle.sh`
 
 ## Running tools/coord_to_intervaltree.py
 The `coord_to_intervaltree.py` script contains wrapper classes for `IntervalTree` and `Interval` objects: `PantherIntervalTree` and `PantherInterval`. You can quickly extract TSV and JSON formatted coordinates given a HUMAN peptide FASTA `--pep_fasta` file and Reference Proteome HUMAN ID mapping `--idmapping` file:

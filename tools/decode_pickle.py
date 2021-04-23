@@ -1,10 +1,11 @@
-from config.base import ROOT_DIR, dir_path, file_path
+
 import pickle
 import json
 import shutil
 from os import mkdir, path as ospath
 import argparse
 from intervaltree import IntervalTree
+from config.base import ROOT_DIR
 
 
 def main():
@@ -27,10 +28,10 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Visualizing the panther data',
                                      epilog='I hope this works!')
     parser.add_argument('-o', '--output', dest='output_dir', required=True,
-                        type=dir_path, help='Output folder')
+                        help='Output folder')
 
     parser.add_argument('-p', '--pickle', dest='pickle_file', required=True,
-                        type=file_path, help='Input pickle file')
+                        help='Input pickle file')
 
     return parser.parse_args()
 
@@ -48,18 +49,30 @@ def create_working_dir(directory):
 # Just dumping it as string until we find something else
 
 
-class NonPantherEncoder(json.JSONEncoder):
+class IntervalTreeEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, IntervalTree):
-            return str(obj)
+            interval_jsons = [{
+                "begin": i.begin,
+                "end": i.end,
+                "data": i.data
+            } for i in obj.all_intervals]
+
+            return interval_jsons
+            # return str(obj)
         # Let the base class default method raise the TypeError
         return json.JSONEncoder.default(self, obj)
 
 
 def write_to_json(data, output_file):
     with open(output_file, 'w', encoding='utf-8') as outfile:
-        json.dump(data, outfile, cls=NonPantherEncoder,
+        json.dump(data, outfile, cls=IntervalTreeEncoder,
                   ensure_ascii=False, indent=4)
+
+
+def write_to_pickle(data, output_file):
+    with open(output_file, 'wb') as handle:
+        pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def write_to_txt(data, output_file):

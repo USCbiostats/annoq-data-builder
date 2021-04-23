@@ -1,0 +1,21 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Depickle",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/tools/decode_pickle.py",
+            "python": "${workspaceFolder}/venv/bin/python3",
+            "args": [
+                "--pickle",
+                "./../../annoq-data/panther_anno_tree_12_20.pkl",
+                "--output",
+                "./../../annoq-data/tmp_"
+            ]
+        },
+    ]
+}
