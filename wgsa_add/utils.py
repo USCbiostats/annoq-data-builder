@@ -1,6 +1,8 @@
 
+hgnc_file = './../annoq-data/wgsa_add/hgnc.txt'
 
-def load_hgnc_ensg_to_hgnc_table(filepath='./../../annoq-data/hgnc.txt', debug=False):
+
+def load_hgnc_ensg_to_hgnc_table(filepath=hgnc_file, debug=False):
     f = open(filepath)
     f.readline()
     mapping = {}
@@ -63,7 +65,7 @@ def add_record(r, add_info, sep='\t'):
     return r.rstrip() + sep + sep.join(add_info) + '\n'
 
 
-def load_hgnc_ensg_to_hgnc_table(filepath='./../../annoq-data/hgnc.txt', debug=False):
+def load_hgnc_ensg_to_hgnc_table(filepath=hgnc_file, debug=False):
     f = open(filepath)
     f.readline()
     mapping = {}
@@ -97,7 +99,7 @@ def convert_ensg_hgnc(ensg):
     return hgncs[0]
 
 
-def load_hgnc_refseq_to_hgnc_table(filepath='./../../annoq-data/hgnc.txt', debug=False):
+def load_hgnc_refseq_to_hgnc_table(filepath=hgnc_file, debug=False):
     f = open(filepath)
     f.readline()
     mapping = {}

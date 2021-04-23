@@ -1,15 +1,39 @@
+import argparse
+from collections import defaultdict
+from tools.base import ROOT_DIR, load_json
 import fileinput
 import pickle
 import sys
+from os import mkdir, path as ospath
 from utils import add_record, combine_panther_record, convert_tools, parse_tab_anno_record
 
-pickle_data = pickle.load(open('panther_anno_tree_12_20.pkl', 'rb'))
-panther_data = pickle_data['panther_data']
-tree = pickle_data['GRCh37_PANTHER_anno_tree']
-# need pickle data panther_anno_tree.pkl
-# pickle data build by mk_panther_anno_tree.py
-gene_cor_dict = {i[2]: (i[1][1], i[1][2]) for i in pickle_data['cor_data']}
-#[ENSG_id, (contig, start, end), HGNC_id]
+
+def nested_dict(): return defaultdict(nested_dict)
+
+
+def main(vcf):
+    parser = parse_arguments()
+    panther_dir = ospath.join(ROOT_DIR, parser.panther_dir)
+
+    annoq_tree = pickle.load(
+        open(ospath.join(panther_dir, 'annoq_tree.pkl'), 'rb'))
+    panther_data = load_json(ospath.join(panther_dir, 'panther_data.json'))
+    coord_data = load_json(ospath.join(panther_dir, 'coords_data.json'))
+
+    gene_coords = {i[2]: (i[1][1], i[1][2]) for i in coord_data}
+    # [ENSG_id, (contig, start, end), HGNC_id]
+
+    add_anno(vcf, annoq_tree,
+             panther_data, gene_coords, lambda x: print(x.rstrip()))
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='Visualizing the panther data',
+                                     epilog='I hope this works!')
+    parser.add_argument('-p', '--panther_dir', dest='panther_dir', required=True,
+                        help='Panther Dir (panther_data, cor_data and annoq_tree)')
+
+    return parser.parse_args()
 
 
 def get_dist(g_name, gene_cor_dict, pos):
@@ -32,7 +56,7 @@ def get_nearest_gene(gene_cor_dict, pids, pos):
     return min_g
 
 
-def add_panther_anno_record(r, anno_tree, panther_data, ext=0, strand=['-1', '1']):
+def add_panther_anno_record(r, anno_tree, panther_data, gene_coords, ext=0, strand=['-1', '1']):
     (chrom, pos) = parse_tab_anno_record(r)
     pids = []
     for s in strand:
@@ -40,7 +64,7 @@ def add_panther_anno_record(r, anno_tree, panther_data, ext=0, strand=['-1', '1'
     pids = list(set(pids))
     if len(pids) > 0:
         # return combine_panther_record([pids[0]], panther_data)
-        return combine_panther_record([get_nearest_gene(gene_cor_dict, pids, int(pos))], panther_data)
+        return combine_panther_record([get_nearest_gene(gene_coords, pids, int(pos))], panther_data)
     else:
         return combine_panther_record([], panther_data)
 
@@ -61,7 +85,7 @@ def get_tools_prefix(tool_name):
     return name[0] + "_" + name[1] + "_"
 
 
-def add_anno(f, pickle_data, panther_data, deal_res=print):
+def add_anno(f, annoq_tree, panther_data, gene_coords, deal_res=print):
     print("in in")
     exts = [0, 1e4, 2e4]
     anno_tools_cols = [	'ANNOVAR_ensembl_Gene_ID',
@@ -89,12 +113,13 @@ def add_anno(f, pickle_data, panther_data, deal_res=print):
     for r in f:
         add_cols = []
         for ext in exts:
-            add_cols += add_panther_anno_record(r, tree, panther_data, ext=ext)
+            add_cols += add_panther_anno_record(r, annoq_tree,
+                                                panther_data, gene_coords, ext=ext)
         for tool_type in anno_tools_cols:
             add_cols += add_tool_based_anno_record(
                 r, tool_idxs[tool_type], tool_type, panther_data)
         deal_res(add_record(r, add_cols))
 
 
-add_anno(fileinput.input('./../../annoq-data/slim-hrc/slim-chr21.vcf'), pickle_data,
-         panther_data, lambda x: print(x.rstrip()))
+if __name__ == "__main__":
+    main(fileinput.input('./../annoq-data/slim-hrc/slim-chr21.vcf'))

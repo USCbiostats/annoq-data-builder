@@ -5,7 +5,7 @@ import shutil
 from os import mkdir, path as ospath
 import argparse
 from intervaltree import IntervalTree
-from config.base import ROOT_DIR
+from base import ROOT_DIR
 
 
 def main():
@@ -22,6 +22,7 @@ def main():
         # write each high level dict key, panther data, anno_tree, etc,
         for key, val in thawed.items():
             write_to_json(val, ospath.join(output_dir, key+'.json'))
+            write_to_pickle(val, ospath.join(output_dir, key+'.pkl'))
 
 
 def parse_arguments():

@@ -1,8 +1,7 @@
 import argparse
 import csv
 import json
-from decode_pickle import write_to_pickle
-from decode_pickle import write_to_json
+from decode_pickle import write_to_pickle, write_to_json
 from typing import List
 from intervaltree import IntervalTree, Interval
 from collections import defaultdict
@@ -117,7 +116,8 @@ if __name__ == "__main__":
         for l in ff.readlines():
             if l.startswith(">"):
                 pthr_interval = PantherInterval.parse_header(l)
-                itree.add_interval(pthr_interval)
+                if pthr_interval.hgnc_id:
+                    itree.add_interval(pthr_interval)
 
     if args.json:
         interval_jsons = [i.as_json() for i in itree]
@@ -131,4 +131,4 @@ if __name__ == "__main__":
         add_flanking_region(i, annoq_tree)
 
     write_to_json(annoq_tree, "outfile_temp_3.json")
-    write_to_pickle(annoq_tree, "outfile_pickle.pkl")
+    write_to_pickle(annoq_tree, "annoq_tree.pkl")
