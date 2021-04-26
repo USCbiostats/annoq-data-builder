@@ -1,6 +1,6 @@
 import argparse
 from collections import defaultdict
-from tools.base import ROOT_DIR, load_json
+from base import ROOT_DIR, load_json, load_pickle
 import fileinput
 import pickle
 import sys
@@ -11,20 +11,20 @@ from utils import add_record, combine_panther_record, convert_tools, parse_tab_a
 def nested_dict(): return defaultdict(nested_dict)
 
 
-def main(vcf):
+def main():
     parser = parse_arguments()
     panther_dir = ospath.join(ROOT_DIR, parser.panther_dir)
+    vcf_path = ospath.join(ROOT_DIR, parser.vcf_path)
 
-    annoq_tree = pickle.load(
-        open(ospath.join(panther_dir, 'annoq_tree.pkl'), 'rb'))
+    annoq_tree = load_pickle(ospath.join(panther_dir, 'annoq_tree.pkl'))
     panther_data = load_json(ospath.join(panther_dir, 'panther_data.json'))
     coord_data = load_json(ospath.join(panther_dir, 'coords_data.json'))
 
     gene_coords = {i[2]: (i[1][1], i[1][2]) for i in coord_data}
     # [ENSG_id, (contig, start, end), HGNC_id]
 
-    add_anno(vcf, annoq_tree,
-             panther_data, gene_coords, lambda x: print(x.rstrip()))
+    add_annotations(vcf_path, annoq_tree,
+                    panther_data, gene_coords, lambda x: print(x.rstrip()))
 
 
 def parse_arguments():
@@ -32,6 +32,8 @@ def parse_arguments():
                                      epilog='I hope this works!')
     parser.add_argument('-p', '--panther_dir', dest='panther_dir', required=True,
                         help='Panther Dir (panther_data, cor_data and annoq_tree)')
+    parser.add_argument('-f', '--vcf_path', dest='vcf_path', required=True,
+                        help='VCF file')
 
     return parser.parse_args()
 
@@ -85,8 +87,7 @@ def get_tools_prefix(tool_name):
     return name[0] + "_" + name[1] + "_"
 
 
-def add_anno(f, annoq_tree, panther_data, gene_coords, deal_res=print):
-    print("in in")
+def add_annotations(filepath, annoq_tree, panther_data, gene_coords, deal_res=print):
     exts = [0, 1e4, 2e4]
     anno_tools_cols = [	'ANNOVAR_ensembl_Gene_ID',
                         'ANNOVAR_refseq_Transcript_ID',
@@ -94,32 +95,38 @@ def add_anno(f, annoq_tree, panther_data, gene_coords, deal_res=print):
                         'SnpEff_refseq_Transcript_ID',
                         'VEP_ensembl_Gene_ID',
                         'VEP_refseq_Transcript_ID']
-    # make column names
-    col_line = f.readline().rstrip()
 
-    col_names = col_line.split("\t")
-    add_cols = []
-    tool_idxs = {}
-    for ext in exts:
-        add_cols += ['flanking_' +
-                     str(int(ext)) + '_' + i for i in panther_data['cols'][1:]]
-    for tool_type in anno_tools_cols:
-        add_cols += [get_tools_prefix(tool_type) +
-                     i for i in panther_data['cols'][1:]]
-        tool_idxs[tool_type] = col_names.index(tool_type)
-    deal_res(add_record(col_line, add_cols))
+    with open(filepath) as fp:
+        # make column names
+        row = fp.readline().rstrip()
 
-    # add info
-    for r in f:
+        col_names = row.split("\t")
         add_cols = []
+        tool_idxs = {}
         for ext in exts:
-            add_cols += add_panther_anno_record(r, annoq_tree,
-                                                panther_data, gene_coords, ext=ext)
+            add_cols += ['flanking_' +
+                         str(int(ext)) + '_' + i for i in panther_data['cols'][1:]]
         for tool_type in anno_tools_cols:
-            add_cols += add_tool_based_anno_record(
-                r, tool_idxs[tool_type], tool_type, panther_data)
-        deal_res(add_record(r, add_cols))
+            add_cols += [get_tools_prefix(tool_type) +
+                         i for i in panther_data['cols'][1:]]
+            tool_idxs[tool_type] = col_names.index(tool_type)
+        deal_res(add_record(row, add_cols))
+
+        # add info
+
+        cnt = 1
+        while row:
+            row = fp.readline()
+            if row:
+                cnt += 1
+                add_cols = []
+                for ext in exts:
+                    add_cols += add_panther_anno_record(row, annoq_tree,
+                                                        panther_data, gene_coords, ext=ext)
+                for tool_type in anno_tools_cols:
+                    add_cols += add_tool_based_anno_record(
+                        row, tool_idxs[tool_type], tool_type, panther_data)
+                deal_res(add_record(row, add_cols))
 
 
-if __name__ == "__main__":
-    main(fileinput.input('./../annoq-data/slim-hrc/slim-chr21.vcf'))
+main()

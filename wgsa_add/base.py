@@ -28,7 +28,7 @@ def project_dir(base):
     )
 
 
-ROOT_DIR = project_dir('..')
+ROOT_DIR = project_dir('.')
 
 
 def load_json(filepath):
