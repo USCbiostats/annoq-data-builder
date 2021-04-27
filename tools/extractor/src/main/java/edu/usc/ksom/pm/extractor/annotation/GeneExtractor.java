@@ -432,8 +432,8 @@ public class GeneExtractor {
 //            System.out.println("Please specify the correct number of parameters");
 //            return;
 //        }
-         new GeneExtractor("C:/Temp/test/", "Homo sapiens");
-        //new GeneExtractor(args[0], args[1]);
+         //new GeneExtractor("C:/Temp/test/", "Homo sapiens");
+        new GeneExtractor(args[0], args[1]);
     }
 
     // From https://stackoverflow.com/questions/3948206/json-order-mixed-up and user (https://stackoverflow.com/users/387623/unixshadow) to preserve order of json fields
