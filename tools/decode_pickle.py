@@ -21,8 +21,9 @@ def main():
 
         # write each high level dict key, panther data, anno_tree, etc,
         for key, val in thawed.items():
+            print(key)
             write_to_json(val, ospath.join(output_dir, key+'.json'))
-            write_to_pickle(val, ospath.join(output_dir, key+'.pkl'))
+            #write_to_pickle(val, ospath.join(output_dir, key+'.pkl'))
 
 
 def parse_arguments():
@@ -52,6 +53,8 @@ def create_working_dir(directory):
 
 class IntervalTreeEncoder(json.JSONEncoder):
     def default(self, obj):
+        if isinstance(obj, set):
+            return list(obj)
         if isinstance(obj, IntervalTree):
             interval_jsons = [{
                 "begin": i.begin,

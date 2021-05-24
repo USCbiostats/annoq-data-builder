@@ -1,5 +1,5 @@
 #!/bin/bash 
 
 python3 tools/decode_pickle.py  \
---pickle ./../annoq-data/panther_anno_tree_12_20.pkl \
+--pickle ./../annoq-data/enhancer/enhancer_anno_interval_tree \
 --output ./../annoq-data/tmp_ 

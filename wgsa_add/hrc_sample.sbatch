@@ -12,11 +12,10 @@ module load python/3.9.2
 
 python3 --version
 source venv/bin/activate
-mkdir $outdir
-for i in `ls $input|grep gz$`; do
-echo "zcat $input/$i |python3 add_panther_anno.py -p ./../annoq-data/wgsa_add  |gzip > $outdir/$i"
-echo start at `date`
-zcat $input/$i |python3 add_panther_anno.py -p ./../annoq-data/wgsa_add |gzip > $outdir/$i
-echo end at `date`
+mkdir -p $outdir
+for i in `ls $input`; do
+    echo "python3 add_panther_anno.py -f $input/$i -p ./../../annoq-data/wgsa_add |gzip > $outdir/$i"
+    echo start at `date`
+    python3 add_panther_anno.py -f $input/$i -p ./../../annoq-data/wgsa_add |gzip > $outdir/$i
+    echo end at `date`
 done
-#perl splitVCF_new.pl working_dir/All_20180418.vcf 16503655

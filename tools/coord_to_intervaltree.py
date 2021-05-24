@@ -91,12 +91,7 @@ def add_flanking_region(interval: PantherInterval, annoq_tree):
             annoq_interval)
 
 
-ensembl_to_uniprot = {}
-uniprot_to_hgnc = {}
-
-if __name__ == "__main__":
-    args = parser.parse_args()
-
+def foo(args):
     with open(args.idmapping) as idf:
         reader = csv.reader(idf, delimiter="\t")
         for r in reader:
@@ -116,8 +111,19 @@ if __name__ == "__main__":
         for l in ff.readlines():
             if l.startswith(">"):
                 pthr_interval = PantherInterval.parse_header(l)
-                if pthr_interval.hgnc_id:
-                    itree.add_interval(pthr_interval)
+                # if pthr_interval.hgnc_id:
+                itree.add_interval(pthr_interval)
+
+    return itree
+
+
+ensembl_to_uniprot = {}
+uniprot_to_hgnc = {}
+
+if __name__ == "__main__":
+    args = parser.parse_args()
+
+    itree = foo(args)
 
     if args.json:
         interval_jsons = [i.as_json() for i in itree]
