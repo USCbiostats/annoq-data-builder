@@ -27,6 +27,8 @@ def verify_terms_labels(terms, panther_data):
     data = panther_data['data']
     visited_terms = set()
 
+    print(f"ID \t CatogoRy Label \t  Genes Agg Labels")
+
     for key, value in data.items():
         id_cols = value[1::2]
         label_cols = value[0::2]
@@ -38,7 +40,7 @@ def verify_terms_labels(terms, panther_data):
                     term = get_term(terms, term_id)
                     # print(term)
                     if term is not None and term['label'] != labels[j] and term_id not in visited_terms:
-                        print(f"{term_id} -> {term['label']} !=  {labels[j]}")
+                        print(f"{term_id} \t {term['label']} \t  {labels[j]}")
                         visited_terms.add(term_id)
                         #raise ValueError(f"{term_id}not equal")
 
@@ -50,6 +52,8 @@ def verify_terms_present(terms, panther_data):
     data = panther_data['data']
     visited_terms = set()
 
+    print(f"ID \t Label")
+
     for key, value in data.items():
         id_cols = value[1::2]
         label_cols = value[0::2]
@@ -60,8 +64,8 @@ def verify_terms_present(terms, panther_data):
                 if term_id != "":
                     term = get_term(terms, term_id)
                     # print(term)
-                    if term is not None and term_id not in visited_terms:
-                        print(f"{term_id} -> {labels[j]}")
+                    if term_id not in visited_terms and term is None:
+                        print(f"{term_id} \t {labels[j]}")
                         visited_terms.add(term_id)
                         #raise ValueError(f"{term_id}not equal")
     print(f"Not Found: {len(visited_terms)} terms")
