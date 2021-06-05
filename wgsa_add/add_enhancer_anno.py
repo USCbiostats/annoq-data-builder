@@ -29,8 +29,10 @@ col_names = ["genes",
 
 def main():
     parser = parse_arguments()
-    panther_dir = ospath.join(ROOT_DIR, parser.panther_dir)
-    vcf_path = ospath.join(ROOT_DIR, parser.vcf_path)
+    panther_dir = parser.panther_dir
+    vcf_path = parser.vcf_path
+
+    add_annotation(vcf_path, lambda x: print(x.rstrip()))
 
 
 def parse_arguments():
@@ -67,18 +69,22 @@ pickle_data = pickle.load(
 trees = pickle_data
 
 
-def add_anno(f, deal_res=print):
-    col_line = f.readline().rstrip()
-    add_cols = ['enhancer_linked_' + i for i in col_names]
-    deal_res(add_record(col_line, add_cols))
+def add_annotation(filepath, deal_res=print):
 
-    # add info
-    for r in f:
-        line = r.rstrip().split("\t")
-        chrom, pos = line[0], int(line[1])
-        coor = [chrom, pos]
-        add_cols = combine_interval_data_into_r(coor, col_names)
-        deal_res(add_record(r, add_cols))
+    with open(filepath) as fp:
+        col_line = fp.readline().rstrip()
+        add_cols = ['enhancer_linked_' + i for i in col_names]
+        deal_res(add_record(col_line, add_cols))
+
+        # add info
+        while row:
+            row = fp.readline()
+            line = row.rstrip().split("\t")
+            chrom, pos = line[0], int(line[1])
+            coor = [chrom, pos]
+            add_cols = combine_interval_data_into_r(coor, col_names)
+            deal_res(add_record(row, add_cols))
 
 
-add_anno(fileinput.input(), lambda x: print(x.rstrip()))
+if __name__ == "__main__":
+    main()

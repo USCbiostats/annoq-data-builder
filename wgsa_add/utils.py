@@ -34,14 +34,14 @@ def combine_record(r_list, seq='|'):
 
 
 def combine_panther_record(ids, panther_data, sep='|'):
-    panther_recored_length = len(panther_data['cols']) - 1
+    panther_record_length = len(panther_data['cols']) - 1
     ids = [i for i in ids if i in panther_data['data']]
     if not ids:
-        return ['.' for i in range(panther_recored_length)]
-    res = [[] for i in range(panther_recored_length)]
+        return ['.' for i in range(panther_record_length)]
+    res = [[] for i in range(panther_record_length)]
     for pid in ids:
         anno = panther_data['data'][pid]
-        for idx in range(0, panther_recored_length, 2):
+        for idx in range(0, panther_record_length, 2):
             cur_data = anno[idx].split(sep)
             follow_data = anno[idx + 1].split(sep)
             for i in range(len(cur_data)):

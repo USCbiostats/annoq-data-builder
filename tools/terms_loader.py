@@ -4,6 +4,7 @@ import json
 import argparse
 from sys import path
 from base import load_json
+import pprint
 
 
 def main():
@@ -15,11 +16,32 @@ def main():
     terms = load_terms(terms_file)
     panther_data = load_json(panther_file)
 
-    print('Terms label mismatch\n')
-    verify_terms_labels(terms, panther_data)
+    #verify_terms_labels(terms, panther_data)
+    #verify_terms_present(terms, panther_data)
 
-    print('\n\nTerms not found in Category File\n')
-    verify_terms_present(terms, panther_data)
+    generate_terms_lookup(panther_data)
+
+
+def generate_terms_lookup(panther_data):
+    cols = panther_data['cols'][1:]
+    data = panther_data['data']
+    visited_terms = set()
+    lookup = dict()
+
+    for key, value in data.items():
+        id_cols = value[1::2]
+        label_cols = value[0::2]
+        for i, id_col in enumerate(id_cols):
+            labels = label_cols[i].split('|')
+            for j, term_id in enumerate(id_col.split('|')):
+                if term_id != "" and term_id not in visited_terms:
+                    lookup[term_id] = {
+                        'id': term_id,
+                        'label': labels[j]
+                    }
+                    visited_terms.add(term_id)
+
+    return lookup
 
 
 def verify_terms_labels(terms, panther_data):
@@ -27,7 +49,7 @@ def verify_terms_labels(terms, panther_data):
     data = panther_data['data']
     visited_terms = set()
 
-    print(f"ID \t CatogoRy Label \t  Genes Agg Labels")
+    print(f"ID \t Category Label \t  Genes Agg Labels")
 
     for key, value in data.items():
         id_cols = value[1::2]

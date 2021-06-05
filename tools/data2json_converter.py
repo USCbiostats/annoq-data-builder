@@ -14,8 +14,33 @@ output_columns = [
     "start",
     "end",
     "enhancer",
+    "linkID",
     "gene",
 ]
+
+
+class EnahancerGene:
+    def __init__(self, records=[]) -> None:
+        self.records = records
+        self.record = dict()
+        self.genes = set()
+
+    def add_record(self, record):
+        if not self.record:
+            self.record = record
+
+        if self.record['linkID'] == record['linkID']:
+            self.genes.add(record['gene'])
+        else:
+            self.records.append({**self.record, **{'genes': list(self.genes)}})
+            self.reset_record()
+
+    def reset_record(self):
+        self.record.clear()
+        self.genes.clear()
+
+    def reset_records(self):
+        self.records = []
 
 
 def parse_enhancer_file(filepath):
@@ -32,16 +57,13 @@ def parse_enhancer_file(filepath):
     return lookup
 
 
-COORDINATES_LOOKUP = None  # TODO: Enhancer coordinates files
+COORDINATES_LOOKUP = None
 OUT_JSON = None
 
 
 def writeout(jsons):
     with open(OUT_JSON, "w") as j:
         json.dump(jsons, j, indent=4)
-
-
-def add_gene():
 
 
 def parse_file(raw_file):
@@ -53,8 +75,9 @@ def parse_file(raw_file):
     # ['1', 'HUMAN|HGNC=15846|UniProtKB=Q9NP74', '1', '4', '53', '6e-08', '']
 
     bunchsize = 1_00
-    new_jsons = []
     link_ids = set()
+    enhancer_gene = EnahancerGene()
+
     with open(raw_file) as f:
         reader = csv.reader(f, delimiter="\t")
         col_map = next(reader)
@@ -73,11 +96,12 @@ def parse_file(raw_file):
             json_line = {k: v for k, v in new_line.items()
                          if k in output_columns}
 
-            new_jsons.append(json_line)
-            if len(new_jsons) == bunchsize:
+            enhancer_gene.add_record(json_line)
+
+            if len(enhancer_gene.records) == bunchsize:
                 print("writing files out")
-                writeout(new_jsons)
-                new_jsons = []
+                writeout(enhancer_gene.records)
+                enhancer_gene.reset_records()
                 # temp testing
                 break
 
@@ -99,7 +123,6 @@ def main():
     OUT_JSON = args.out_json
 
     parse_file(args.raw_file)
-    # TODO: Add docs for unlinked enhancers
 
 
 if __name__ == "__main__":

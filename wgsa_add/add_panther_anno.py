@@ -1,10 +1,7 @@
 import argparse
 from collections import defaultdict
 from base import ROOT_DIR, load_json, load_pickle
-import fileinput
-import pickle
-import sys
-from os import mkdir, path as ospath
+from os import path as ospath
 from utils import add_record, combine_panther_record, convert_tools, parse_tab_anno_record
 
 
@@ -129,4 +126,5 @@ def add_annotations(filepath, annoq_tree, panther_data, gene_coords, deal_res=pr
                 deal_res(add_record(row, add_cols))
 
 
-main()
+if __name__ == "__main__":
+    main()
