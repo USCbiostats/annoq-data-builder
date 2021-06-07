@@ -57,7 +57,6 @@ def combine_interval_data_into_r(coor, ks):
         for k in i.data:
             res[k] = res.get(k, set()).union(i.data[k])
     for k in ks:
-        # print(k)
         if not res.get(k):
             res[k] = '.'
 
