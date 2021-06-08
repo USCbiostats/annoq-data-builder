@@ -1,7 +1,9 @@
+from collections import defaultdict
 import csv
 import json
 import argparse
 import time
+import shutil
 from os import path
 from base import load_json
 from terms_loader import generate_terms_lookup, get_term
@@ -20,7 +22,6 @@ output_columns = [
     "start",
     "end",
     "enhancer",
-    "linkID",
     "gene",
 ]
 
@@ -30,8 +31,13 @@ PANTHER_LOOKUP = None
 OUT_JSON = None
 
 
+def nested_dict(): return defaultdict(nested_dict)
+
+
 def create_working_dir(directory):
     try:
+        if ospath.exists(directory):
+            shutil.rmtree(directory)
         mkdir(directory)
         print(directory + "(temp work output directory) created")
     except:
@@ -45,15 +51,15 @@ def set_default(obj):
 
 
 def writeout(filepath, jsons):
-    with open(filepath, "w") as j:
-        json.dump(jsons, j, indent=4)
+    with open(filepath, "w",  encoding='utf-8') as f:
+        json.dump(jsons, f)
 
 
 class EnahancerGene:
     global PANTHER_LOOKUP
 
-    def __init__(self, records=[]) -> None:
-        self.records = records
+    def __init__(self, chr_map) -> None:
+        self.chr_map = chr_map
         self.record = dict()
         self.genes = set()
 
@@ -70,8 +76,22 @@ class EnahancerGene:
             self.genes.add(record['gene'])
         else:
             self.record['data'] = self.add_enhancer_genes(self.genes)
-            self.records.append({**self.record, **{'genes': list(self.genes)}})
-            self.reset_record()
+            self.add_chr_map()
+            self.genes.add(record['gene'])
+
+    def add_chr_map(self):
+        if not self.record:
+            return
+
+        if not self.chr_map[self.record['chrNum']]:
+            self.chr_map[self.record['chrNum']] = list()
+
+        del self.record['gene']
+
+        self.chr_map[self.record['chrNum']].append(
+            {**self.record, **{'genes': list(self.genes)}})
+
+        self.reset_record()
 
     def get_hgnc_id(self, gene_id):
         if gene_id == None:
@@ -117,9 +137,6 @@ class EnahancerGene:
         self.record.clear()
         self.genes.clear()
 
-    def reset_records(self):
-        self.records = []
-
 
 def parse_enhancer_file(filepath):
     lookup = {}
@@ -143,10 +160,11 @@ def parse_file(raw_file):
     # rows[20]
     # ['1', 'HUMAN|HGNC=15846|UniProtKB=Q9NP74', '1', '4', '53', '6e-08', '']
     start_time = time.time()
+    bunchsize = 10_000
+    count = 0
 
-    bunchsize = 1000
-    link_ids = set()
-    enhancer_gene = EnahancerGene()
+    result = nested_dict()
+    enhancer_gene = EnahancerGene(result)
 
     with open(raw_file) as f:
         reader = csv.reader(f, delimiter="\t")
@@ -156,8 +174,6 @@ def parse_file(raw_file):
             new_line = {}
             for idx, val in enumerate(r):
                 if len(val) > 0:
-                    if col_map[idx] == "linkID":
-                        link_ids.add(val)
                     if col_map[idx] == "enhancer":
                         new_line = {**new_line, **COORDINATES_LOOKUP[val]}
 
@@ -168,14 +184,22 @@ def parse_file(raw_file):
 
             enhancer_gene.add_record(json_line)
 
-            if len(enhancer_gene.records) == bunchsize:
+            # temp testing
+            count += 1
+            """  if count == bunchsize:
                 print("writing files out")
                 print("used time", time.time() - start_time, "s")
-                writeout(ospath.join(OUT_JSON, '21.json'),
-                         enhancer_gene.records)
-                enhancer_gene.reset_records()
-                # temp testing
-                break
+                break """
+
+        """ Add last record """
+        enhancer_gene.add_chr_map()
+        for chr, value in result.items():
+            print("writing files out")
+            print("used time", time.time() - start_time, "s")
+            writeout(ospath.join(OUT_JSON, chr+'.json'),
+                     value)
+
+        print(f'Total {count}')
 
 
 def check_file(file_path):
