@@ -29,16 +29,20 @@ col_names = ["genes",
 
 def main():
     parser = parse_arguments()
-    panther_dir = parser.panther_dir
+    global ENHANCER_DIR
+    enhancer_dir = parser.enhancer_dir
     vcf_path = parser.vcf_path
 
-    add_annotation(vcf_path, lambda x: print(x.rstrip()))
+    annotation_file = ospath.splitext(ospath.basename(vcf_path))[0]
+    annotation = load_json(ospath.join(enhancer_dir, annotation_file+'.json'))
+
+    add_annotation(vcf_path, annotation, lambda x: print(x.rstrip()))
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Visualizing the panther data',
                                      epilog='I hope this works!')
-    parser.add_argument('-p', '--panther_dir', dest='panther_dir', required=True,
+    parser.add_argument('-e', '--enhancer_dir', dest='enhancer_dir', required=True,
                         help='Panther Dir (panther_data, cor_data and annoq_tree)')
     parser.add_argument('-f', '--vcf_path', dest='vcf_path', required=True,
                         help='VCF file')
@@ -46,16 +50,18 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def combine_interval_data_into_r(coor, ks):
+def in_region(pos, start, end):
+    return pos >= start and pos <= end
+
+
+def combine_interval_data_into_r(annotations, coor, ks):
     chrom, pos = coor[0], coor[1]
-    if not chrom in trees:
-        r = []
-    else:
-        r = trees[chrom][pos]
+    r = [annotation for annotation in annotations
+         if in_region(pos, annotation['start'], annotation['end'])]
     res = {}
     for i in r:
-        for k in i.data:
-            res[k] = res.get(k, set()).union(i.data[k])
+        for k in i['data']:
+            res[k] = res.get(k, set()).union(i['data'][k])
     for k in ks:
         if not res.get(k):
             res[k] = '.'
@@ -63,25 +69,23 @@ def combine_interval_data_into_r(coor, ks):
     return [';'.join(res[k]) for k in ks]
 
 
-pickle_data = pickle.load(
-    open('data/enhancer/enhancer_anno_interval_tree', 'rb'))
-trees = pickle_data
-
-
-def add_annotation(filepath, deal_res=print):
+def add_annotation(filepath, annotations, deal_res=print):
 
     with open(filepath) as fp:
-        col_line = fp.readline().rstrip()
+        row = fp.readline().rstrip()
         add_cols = ['enhancer_linked_' + i for i in col_names]
-        deal_res(add_record(col_line, add_cols))
+        deal_res(add_record(row, add_cols))
 
         # add info
         while row:
             row = fp.readline()
+            if not row:
+                continue
             line = row.rstrip().split("\t")
             chrom, pos = line[0], int(line[1])
             coor = [chrom, pos]
-            add_cols = combine_interval_data_into_r(coor, col_names)
+            add_cols = combine_interval_data_into_r(
+                annotations, coor, col_names)
             deal_res(add_record(row, add_cols))
 
 

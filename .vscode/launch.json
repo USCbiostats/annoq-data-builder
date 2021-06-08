@@ -5,6 +5,32 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: WGSA ENH",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/wgsa_add/add_enhancer_anno.py",
+            "python": "${workspaceFolder}/venv/bin/python3",
+            "args": [
+                "-f",
+                "./../../annoq-data/slim-hrc/chr21.vcf",
+                "-e",
+                "./../../annoq-data/enhancer/temp_out"
+            ]
+        },
+        {
+            "name": "Python: WGSA ADD",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/wgsa_add/add_panther_anno.py",
+            "python": "${workspaceFolder}/venv/bin/python3",
+            "args": [
+                "-f",
+                "./../../annoq-data/slim-hrc/chr21.vcf",
+                "-p",
+                "./../../annoq-data/wgsa_add"
+            ]
+        },
+        {
             "name": "Python: Depickle",
             "type": "python",
             "request": "launch",

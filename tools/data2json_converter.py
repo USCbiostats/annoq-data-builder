@@ -146,8 +146,8 @@ def parse_enhancer_file(filepath):
             # Ex: ['chr1', '99534632', '99534837', '1']
             lookup[r[3]] = {
                 "chrNum": r[0],
-                "start": r[1],
-                "end": r[2],
+                "start": int(r[1]),
+                "end": int(r[2]),
             }
     return lookup
 
@@ -186,7 +186,7 @@ def parse_file(raw_file):
 
             # temp testing
             count += 1
-            """  if count == bunchsize:
+            """ if count == bunchsize:
                 print("writing files out")
                 print("used time", time.time() - start_time, "s")
                 break """
@@ -195,7 +195,7 @@ def parse_file(raw_file):
         enhancer_gene.add_chr_map()
         for chr, value in result.items():
             print("writing files out")
-            print("used time", time.time() - start_time, "s")
+            print(f"used time for {chr}: {time.time() - start_time}s")
             writeout(ospath.join(OUT_JSON, chr+'.json'),
                      value)
 

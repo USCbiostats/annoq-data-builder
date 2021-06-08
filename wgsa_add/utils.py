@@ -1,4 +1,7 @@
 
+import json
+
+
 hgnc_file = './../../annoq-data/wgsa_add/hgnc.txt'
 
 
@@ -141,3 +144,8 @@ def transcript_filter(name):
 
 convert_tools = {'ensembl_Gene_ID': convert_ensg_hgnc,
                  'refseq_Transcript_ID': lambda x: convert_refseq_hgnc(transcript_filter(x))}
+
+
+def load_json(filepath):
+    with open(filepath, encoding='utf-8') as f:
+        return json.load(f)
