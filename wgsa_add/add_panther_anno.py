@@ -93,10 +93,10 @@ def get_tools_prefix(tool_name):
     return name[0] + "_" + name[1] + "_"
 
 
-def add_annotation_header(row, panther_data, deal_res=print, add_cols=[], tool_idxs={}, exts=[], anno_tools_cols=None):
+def add_annotation_header(row, panther_data, deal_res=print, tool_idxs={}, exts=[], anno_tools_cols=None):
 
     col_names = row.split("\t")
-
+    add_cols = []
     for ext in exts:
         add_cols += ['flanking_' +
                      str(int(ext)) + '_' + i for i in panther_data['cols'][1:]]
@@ -104,39 +104,42 @@ def add_annotation_header(row, panther_data, deal_res=print, add_cols=[], tool_i
         add_cols += [get_tools_prefix(tool_type) +
                      i for i in panther_data['cols'][1:]]
         tool_idxs[tool_type] = col_names.index(tool_type)
-    deal_res(add_record(row, add_cols))
+
+    return add_cols
 
 
-def add_annotation_row(row, annoq_tree, panther_data, gene_coords, deal_res=print,  add_cols=[], tool_idxs={}, exts=[], anno_tools_cols=None):
-
+def add_annotation_row(row, annoq_tree, panther_data, gene_coords, deal_res=print,  tool_idxs={}, exts=[], anno_tools_cols=None):
+    add_cols = []
     for ext in exts:
         add_cols += add_panther_anno_record(row, annoq_tree,
                                             panther_data, gene_coords, ext=ext)
     for tool_type in anno_tools_cols:
         add_cols += add_tool_based_anno_record(
             row, tool_idxs[tool_type], tool_type, panther_data)
-    deal_res(add_record(row, add_cols))
+
+    return add_cols
 
 
 def add_annotations(filepath, annoq_tree, panther_data, gene_coords, deal_res=print):
 
-    add_cols = []
     tool_idxs = {}
 
     with open(filepath) as fp:
         # make column names
         row = fp.readline().rstrip()
-        add_annotation_header(row, panther_data, deal_res=deal_res,
-                              add_cols=add_cols,
-                              tool_idxs=tool_idxs,
-                              exts=exts, anno_tools_cols=anno_tools_cols)
+        add_cols = add_annotation_header(row, panther_data, deal_res=deal_res,
+                                         tool_idxs=tool_idxs,
+                                         exts=exts, anno_tools_cols=anno_tools_cols)
+        deal_res(add_record(row, add_cols))
         # add info
 
         while row:
-            row = fp.readline().strip()
+            row = fp.readline()
             if row:
-                add_annotation_row(row, annoq_tree, panther_data, gene_coords, deal_res=deal_res,
-                                   add_cols=add_cols, tool_idxs=tool_idxs, exts=exts, anno_tools_cols=anno_tools_cols)
+                add_cols = add_annotation_row(row, annoq_tree, panther_data, gene_coords, deal_res=deal_res,
+                                              tool_idxs=tool_idxs, exts=exts, anno_tools_cols=anno_tools_cols)
+
+                deal_res(add_record(row, add_cols))
 
 
 if __name__ == "__main__":

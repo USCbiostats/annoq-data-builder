@@ -68,7 +68,8 @@ def combine_interval_data_into_r(annotations, coor, ks):
 
 def add_annotation_header(row, deal_res=print):
     add_cols = ['enhancer_linked_' + i for i in col_names]
-    deal_res(add_record(row, add_cols))
+
+    return add_cols
 
 
 def add_annotation_row(row, annotations, deal_res=print):
@@ -77,20 +78,24 @@ def add_annotation_row(row, annotations, deal_res=print):
     coor = [chrom, pos]
     add_cols = combine_interval_data_into_r(
         annotations, coor, col_names)
-    deal_res(add_record(row, add_cols))
+
+    return add_cols
 
 
 def add_annotation(filepath, annotations, deal_res=print):
 
     with open(filepath) as fp:
         row = fp.readline().rstrip()
-        add_annotation_header(row)
+        add_cols = add_annotation_header(row, deal_res=deal_res)
+        deal_res(add_record(row, add_cols))
 
         # add info
         while row:
             row = fp.readline().rstrip()
             if row:
-                add_annotation_row(row, annotations, deal_res=deal_res)
+                add_cols = add_annotation_row(
+                    row, annotations, deal_res=deal_res)
+                deal_res(add_record(row, add_cols))
 
 
 if __name__ == "__main__":

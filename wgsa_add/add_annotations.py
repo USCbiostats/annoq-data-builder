@@ -48,25 +48,27 @@ def parse_arguments():
 
 def add_annotations(filepath, annotations, annoq_tree, panther_data, gene_coords, deal_res=print):
 
-    add_cols = []
     tool_idxs = {}
     with open(filepath) as fp:
         row = fp.readline().rstrip()
-        add_panther_annotation_header(row, panther_data, deal_res=deal_res,
-                                      add_cols=add_cols,
-                                      tool_idxs=tool_idxs,
-                                      exts=exts, anno_tools_cols=anno_tools_cols)
-        add_enhancer_annotation_header(row)
 
+        cols = add_panther_annotation_header(row, panther_data, deal_res=deal_res,
+                                             tool_idxs=tool_idxs,
+                                             exts=exts, anno_tools_cols=anno_tools_cols)
+        cols += add_enhancer_annotation_header(row)
+
+        deal_res(add_record(row, cols))
         # add info
         while row:
             row = fp.readline().rstrip()
             if row:
-                add_panther_annotation_row(row, annoq_tree, panther_data, gene_coords, deal_res=print,
-                                           add_cols=add_cols, tool_idxs=tool_idxs, exts=exts, anno_tools_cols=anno_tools_cols)
+                cols = add_panther_annotation_row(row, annoq_tree, panther_data, gene_coords, deal_res=deal_res,
+                                                  tool_idxs=tool_idxs, exts=exts, anno_tools_cols=anno_tools_cols)
 
-                add_enhancer_annotation_row(
+                cols += add_enhancer_annotation_row(
                     row, annotations, deal_res=deal_res)
+
+                deal_res(add_record(row, cols))
 
 
 if __name__ == "__main__":
