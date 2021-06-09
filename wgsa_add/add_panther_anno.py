@@ -8,6 +8,15 @@ from utils import add_record, combine_panther_record, convert_tools, parse_tab_a
 def nested_dict(): return defaultdict(nested_dict)
 
 
+exts = [0, 1e4, 2e4]
+anno_tools_cols = [	'ANNOVAR_ensembl_Gene_ID',
+                    'ANNOVAR_refseq_Transcript_ID',
+                    'SnpEff_ensembl_Gene_ID',
+                    'SnpEff_refseq_Transcript_ID',
+                    'VEP_ensembl_Gene_ID',
+                    'VEP_refseq_Transcript_ID']
+
+
 def main():
     parser = parse_arguments()
     panther_dir = ospath.join(ROOT_DIR, parser.panther_dir)
@@ -84,46 +93,50 @@ def get_tools_prefix(tool_name):
     return name[0] + "_" + name[1] + "_"
 
 
+def add_annotation_header(row, panther_data, deal_res=print, add_cols=[], tool_idxs={}, exts=[], anno_tools_cols=None):
+
+    col_names = row.split("\t")
+
+    for ext in exts:
+        add_cols += ['flanking_' +
+                     str(int(ext)) + '_' + i for i in panther_data['cols'][1:]]
+    for tool_type in anno_tools_cols:
+        add_cols += [get_tools_prefix(tool_type) +
+                     i for i in panther_data['cols'][1:]]
+        tool_idxs[tool_type] = col_names.index(tool_type)
+    deal_res(add_record(row, add_cols))
+
+
+def add_annotation_row(row, annoq_tree, panther_data, gene_coords, deal_res=print,  add_cols=[], tool_idxs={}, exts=[], anno_tools_cols=None):
+
+    for ext in exts:
+        add_cols += add_panther_anno_record(row, annoq_tree,
+                                            panther_data, gene_coords, ext=ext)
+    for tool_type in anno_tools_cols:
+        add_cols += add_tool_based_anno_record(
+            row, tool_idxs[tool_type], tool_type, panther_data)
+    deal_res(add_record(row, add_cols))
+
+
 def add_annotations(filepath, annoq_tree, panther_data, gene_coords, deal_res=print):
-    exts = [0, 1e4, 2e4]
-    anno_tools_cols = [	'ANNOVAR_ensembl_Gene_ID',
-                        'ANNOVAR_refseq_Transcript_ID',
-                        'SnpEff_ensembl_Gene_ID',
-                        'SnpEff_refseq_Transcript_ID',
-                        'VEP_ensembl_Gene_ID',
-                        'VEP_refseq_Transcript_ID']
+
+    add_cols = []
+    tool_idxs = {}
 
     with open(filepath) as fp:
         # make column names
         row = fp.readline().rstrip()
-
-        col_names = row.split("\t")
-        add_cols = []
-        tool_idxs = {}
-        for ext in exts:
-            add_cols += ['flanking_' +
-                         str(int(ext)) + '_' + i for i in panther_data['cols'][1:]]
-        for tool_type in anno_tools_cols:
-            add_cols += [get_tools_prefix(tool_type) +
-                         i for i in panther_data['cols'][1:]]
-            tool_idxs[tool_type] = col_names.index(tool_type)
-        deal_res(add_record(row, add_cols))
-
+        add_annotation_header(row, panther_data, deal_res=deal_res,
+                              add_cols=add_cols,
+                              tool_idxs=tool_idxs,
+                              exts=exts, anno_tools_cols=anno_tools_cols)
         # add info
 
-        cnt = 1
         while row:
-            row = fp.readline()
+            row = fp.readline().strip()
             if row:
-                cnt += 1
-                add_cols = []
-                for ext in exts:
-                    add_cols += add_panther_anno_record(row, annoq_tree,
-                                                        panther_data, gene_coords, ext=ext)
-                for tool_type in anno_tools_cols:
-                    add_cols += add_tool_based_anno_record(
-                        row, tool_idxs[tool_type], tool_type, panther_data)
-                deal_res(add_record(row, add_cols))
+                add_annotation_row(row, annoq_tree, panther_data, gene_coords, deal_res=deal_res,
+                                   add_cols=add_cols, tool_idxs=tool_idxs, exts=exts, anno_tools_cols=anno_tools_cols)
 
 
 if __name__ == "__main__":

@@ -1,9 +1,7 @@
-import fileinput
+
 import argparse
 from utils import *
-import pickle
-import sys
-from base import ROOT_DIR, load_json, load_pickle
+from base import load_json
 from os import mkdir, path as ospath
 
 col_names = ["genes",
@@ -29,7 +27,6 @@ col_names = ["genes",
 
 def main():
     parser = parse_arguments()
-    global ENHANCER_DIR
     enhancer_dir = parser.enhancer_dir
     vcf_path = parser.vcf_path
 
@@ -69,24 +66,31 @@ def combine_interval_data_into_r(annotations, coor, ks):
     return [';'.join(res[k]) for k in ks]
 
 
+def add_annotation_header(row, deal_res=print):
+    add_cols = ['enhancer_linked_' + i for i in col_names]
+    deal_res(add_record(row, add_cols))
+
+
+def add_annotation_row(row, annotations, deal_res=print):
+    line = row.rstrip().split("\t")
+    chrom, pos = line[0], int(line[1])
+    coor = [chrom, pos]
+    add_cols = combine_interval_data_into_r(
+        annotations, coor, col_names)
+    deal_res(add_record(row, add_cols))
+
+
 def add_annotation(filepath, annotations, deal_res=print):
 
     with open(filepath) as fp:
         row = fp.readline().rstrip()
-        add_cols = ['enhancer_linked_' + i for i in col_names]
-        deal_res(add_record(row, add_cols))
+        add_annotation_header(row)
 
         # add info
         while row:
-            row = fp.readline()
-            if not row:
-                continue
-            line = row.rstrip().split("\t")
-            chrom, pos = line[0], int(line[1])
-            coor = [chrom, pos]
-            add_cols = combine_interval_data_into_r(
-                annotations, coor, col_names)
-            deal_res(add_record(row, add_cols))
+            row = fp.readline().rstrip()
+            if row:
+                add_annotation_row(row, annotations, deal_res=deal_res)
 
 
 if __name__ == "__main__":
