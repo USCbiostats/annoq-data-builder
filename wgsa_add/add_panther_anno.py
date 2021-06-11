@@ -1,6 +1,6 @@
 import argparse
 from collections import defaultdict
-from base import ROOT_DIR, load_json, load_pickle
+from base import load_json, load_pickle
 from os import path as ospath
 from utils import add_record, combine_panther_record, convert_tools, parse_tab_anno_record
 
@@ -19,8 +19,8 @@ anno_tools_cols = [	'ANNOVAR_ensembl_Gene_ID',
 
 def main():
     parser = parse_arguments()
-    panther_dir = ospath.join(ROOT_DIR, parser.panther_dir)
-    vcf_path = ospath.join(ROOT_DIR, parser.vcf_path)
+    panther_dir = parser.panther_dir
+    vcf_path = parser.vcf_path
 
     annoq_tree = load_pickle(ospath.join(panther_dir, 'annoq_tree.pkl'))
     panther_data = load_json(ospath.join(panther_dir, 'panther_data.json'))

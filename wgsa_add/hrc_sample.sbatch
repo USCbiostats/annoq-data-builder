@@ -6,7 +6,7 @@
 #SBATCH --partition=thomas
 #SBATCH --mem-per-cpu=90G
 
-input='input/hrc_sample'
+input='input_unzipped/hrc_sample'
 outdir='output/hrc_sample'
 module load python/3.9.2
 
@@ -16,6 +16,8 @@ mkdir -p $outdir
 for i in `ls $input`; do
     echo "python3 add_panther_anno.py -f $input/$i -p ./../../annoq-data/wgsa_add |gzip > $outdir/$i"
     echo start at `date`
-    python3 add_panther_anno.py -f $input/$i -p ./../../annoq-data/wgsa_add |gzip > $outdir/$i
+     python3 add_annotations.py -f $input/$i \
+    -p ./../../annoq-data/wgsa_add \
+    -e ./../../annoq-data/enhancer/enhancer_map  > $outdir/$i
     echo end at `date`
 done

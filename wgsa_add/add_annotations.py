@@ -53,9 +53,8 @@ def add_annotations(filepath, annotations, annoq_tree, panther_data, gene_coords
         row = fp.readline().rstrip()
 
         cols = add_panther_annotation_header(row, panther_data, deal_res=deal_res,
-                                             tool_idxs=tool_idxs,
-                                             exts=exts, anno_tools_cols=anno_tools_cols)
-        cols += add_enhancer_annotation_header(row)
+                                             tool_idxs=tool_idxs, exts=exts, anno_tools_cols=anno_tools_cols)
+        cols += add_enhancer_annotation_header()
 
         deal_res(add_record(row, cols))
         # add info
@@ -64,7 +63,6 @@ def add_annotations(filepath, annotations, annoq_tree, panther_data, gene_coords
             if row:
                 cols = add_panther_annotation_row(row, annoq_tree, panther_data, gene_coords, deal_res=deal_res,
                                                   tool_idxs=tool_idxs, exts=exts, anno_tools_cols=anno_tools_cols)
-
                 cols += add_enhancer_annotation_row(
                     row, annotations, deal_res=deal_res)
 

@@ -51,22 +51,22 @@ def in_region(pos, start, end):
     return pos >= start and pos <= end
 
 
-def combine_interval_data_into_r(annotations, coor, ks):
+def combine_interval_data_into_r(annotations, coor, col_names):
     chrom, pos = coor[0], coor[1]
-    r = [annotation for annotation in annotations
-         if in_region(pos, annotation['start'], annotation['end'])]
-    res = {}
-    for i in r:
-        for k in i['data']:
-            res[k] = res.get(k, set()).union(i['data'][k])
-    for k in ks:
-        if not res.get(k):
-            res[k] = '.'
+    panther_annotations = [annotation for annotation in annotations if 
+           in_region(pos, annotation['start'], annotation['end'])]
+    result = {}
+    for annotation in panther_annotations:
+        for col_name in annotation['data']:
+            result[col_name] = result.get(col_name, set()).union(annotation['data'][col_name])
+    for col_name in col_names:
+        if not result.get(col_name):
+            result[col_name] = '.'
 
-    return [';'.join(res[k]) for k in ks]
+    return [';'.join(result[col_name]) for col_name in col_names]
 
 
-def add_annotation_header(row, deal_res=print):
+def add_annotation_header():
     add_cols = ['enhancer_linked_' + i for i in col_names]
 
     return add_cols
@@ -86,7 +86,7 @@ def add_annotation(filepath, annotations, deal_res=print):
 
     with open(filepath) as fp:
         row = fp.readline().rstrip()
-        add_cols = add_annotation_header(row, deal_res=deal_res)
+        add_cols = add_annotation_header()
         deal_res(add_record(row, add_cols))
 
         # add info
