@@ -52,7 +52,7 @@ def set_default(obj):
 
 def writeout(filepath, jsons):
     with open(filepath, "w",  encoding='utf-8') as f:
-        json.dump(jsons, f)
+        json.dump(jsons, f, indent=4)
 
 
 class EnahancerGene:
@@ -79,6 +79,14 @@ class EnahancerGene:
             self.add_chr_map()
             self.genes.add(record['gene'])
 
+    def add_last_record(self):
+        if not self.record:
+            return
+
+        self.record['data'] = self.add_enhancer_genes(self.genes)
+        self.add_chr_map()
+    
+
     def add_chr_map(self):
         if not self.record:
             return
@@ -86,10 +94,12 @@ class EnahancerGene:
         if not self.chr_map[self.record['chrNum']]:
             self.chr_map[self.record['chrNum']] = list()
 
+        self.record['data']['genes'] = list(self.genes)
+        self.record['data']['enhancer'] = [self.record['enhancer']]
+
         del self.record['gene']
 
-        self.chr_map[self.record['chrNum']].append(
-            {**self.record, **{'genes': list(self.genes)}})
+        self.chr_map[self.record['chrNum']].append( {**self.record})
 
         self.reset_record()
 
@@ -153,14 +163,8 @@ def parse_enhancer_file(filepath):
 
 
 def parse_file(raw_file):
-    # rows[0]
-    # ['enhancer', 'gene', 'linkID', 'assay', 'tissue', 'p-value', 'eQTL_SNP_ID']
-    # rows[3]
-    # ['1', 'HUMAN|HGNC=15846|UniProtKB=Q9NP74', '1', '3', '66', '', '']
-    # rows[20]
-    # ['1', 'HUMAN|HGNC=15846|UniProtKB=Q9NP74', '1', '4', '53', '6e-08', '']
     start_time = time.time()
-    bunchsize = 10_000
+    bunchsize = 10_00
     count = 0
 
     result = nested_dict()
@@ -186,13 +190,13 @@ def parse_file(raw_file):
 
             # temp testing
             count += 1
-            """ if count == bunchsize:
+            """   if count == bunchsize:
                 print("writing files out")
                 print("used time", time.time() - start_time, "s")
-                break """
+                break  """
 
         """ Add last record """
-        enhancer_gene.add_chr_map()
+        enhancer_gene.add_last_record()
         for chr, value in result.items():
             print("writing files out")
             print(f"used time for {chr}: {time.time() - start_time}s")

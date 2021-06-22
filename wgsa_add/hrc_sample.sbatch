@@ -4,7 +4,7 @@
 #SBATCH --mem-per-cpu=30G
 #SBATCH --account=pdthomas_136
 #SBATCH --partition=thomas
-#SBATCH --mem-per-cpu=90G
+#SBATCH --mem-per-cpu=50G
 
 input='input_unzipped/hrc_sample'
 outdir='output/hrc_sample'

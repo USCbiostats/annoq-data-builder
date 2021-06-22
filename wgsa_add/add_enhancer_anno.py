@@ -6,7 +6,7 @@ from os import mkdir, path as ospath
 
 col_names = ["genes",
              "assay",
-             "tissue",
+             "enhancer",
              "GO_molecular_function_complete_list",
              "GO_molecular_function_complete_list_id",
              "GO_biological_process_complete_list",

@@ -7,5 +7,5 @@ outdir='./../../annoq-data/slim-hrc-res'
 for i in `ls $input |grep vcf`; do
   python3 add_annotations.py -f $input/$i \
   -p ./../../annoq-data/wgsa_add \
-  -e ./../../annoq-data/enhancer/temp_out  > $outdir/$i
+  -e ./../../annoq-data/enhancer/enhancer_map  > $outdir/$i
 done

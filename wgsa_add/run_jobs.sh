@@ -8,8 +8,8 @@ work_name='TOPMed'
 
 base_dir='/scratch2/mushayah/WGSA_add'
 
-in_dir='input_unzipped/hrc_sample'
-out_dir='output/hrc_sample'
+in_dir='input_unzipped/HRC_03_07_19/'
+out_dir='output/HRC_03_07_19/'
 slurm_dir='slurm'
 
 #local testing
@@ -24,6 +24,6 @@ for fp in `ls $in_dir|grep .vcf$` ; do
     echo $in_dir/$fp
     IN_FILE=$in_dir/${fp} OUT_FILE=$out_dir/${fp} \
     envsubst '$IN_FILE, $OUT_FILE' < hrc_batch.template > $slurm_dir/slurm_${fp}.slurm
-    #sbatch $slurm_dir/slurm_${fp}.slurm
+    sbatch $slurm_dir/slurm_${fp}.slurm
 done
 

@@ -1,0 +1,7 @@
+	Name	Source	External ID	Organ and Tissue	Cell type	Disease	Sample	Brenda Tissue Ontology	Brenda term	URL
+33	Muscle Skeletal	GTEX		Skeletal muscle			Tissue	BTO:0001103	skeletal muscle	https://gtexportal.org/home/samplingSitePage
+45	Thyroid	GTEX		Thyroid gland			Tissue	BTO:0001379	thyroid gland	https://gtexportal.org/home/samplingSitePage
+58	NB4
+60	GM12892
+62	HeLa-S3
+63	GM12891
