@@ -85,7 +85,6 @@ class EnahancerGene:
 
         self.record['data'] = self.add_enhancer_genes(self.genes)
         self.add_chr_map()
-    
 
     def add_chr_map(self):
         if not self.record:
@@ -99,7 +98,7 @@ class EnahancerGene:
 
         del self.record['gene']
 
-        self.chr_map[self.record['chrNum']].append( {**self.record})
+        self.chr_map[self.record['chrNum']].append({**self.record})
 
         self.reset_record()
 
@@ -124,14 +123,17 @@ class EnahancerGene:
 
         hgnc_ids = [self.get_hgnc_id(gene) for gene in genes]
 
+        # initialize the data
+        for i, id_col in enumerate(id_headers):
+            data[id_headers[i]] = list()
+            data[label_headers[i]] = list()
+
         for hgnc_id in hgnc_ids:
             annotations = panther_data.get(hgnc_id) or []
             #print(hgnc_id, self.get_hgnc_id(hgnc_id), annotations)
 
             id_cols = annotations[1::2]
             for i, id_col in enumerate(id_cols):
-                data[id_headers[i]] = list()
-                data[label_headers[i]] = list()
                 for term_id in id_col.split('|'):
                     if term_id != "" and term_id not in data[id_headers[i]]:
                         term = TERMS_LOOKUP[term_id]
@@ -164,7 +166,7 @@ def parse_enhancer_file(filepath):
 
 def parse_file(raw_file):
     start_time = time.time()
-    bunchsize = 10_00
+    bunchsize = 10_000
     count = 0
 
     result = nested_dict()

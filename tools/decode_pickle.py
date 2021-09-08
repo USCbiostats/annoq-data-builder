@@ -10,8 +10,8 @@ from base import ROOT_DIR
 
 def main():
     parser = parse_arguments()
-    output_dir = ospath.join(ROOT_DIR, parser.output_dir)
-    pickle_file = ospath.join(ROOT_DIR, parser.pickle_file)
+    output_dir = parser.output_dir
+    pickle_file = parser.pickle_file
 
     with open(pickle_file, 'rb') as f:
         thawed = pickle.load(f)
@@ -86,3 +86,6 @@ def write_to_txt(data, output_file):
 
 if __name__ == "__main__":
     main()
+
+
+# python3 decode_pickle.py --pickle ./doc_type.pkl--output ./../annoq-data/tmp_
