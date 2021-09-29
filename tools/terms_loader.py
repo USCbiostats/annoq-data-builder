@@ -10,16 +10,18 @@ import pprint
 def main():
     parser = parse_arguments()
 
-    terms_file = parser.terms_filepath
     panther_file = parser.panther_file
-
-    terms = load_terms(terms_file)
+    out_terms_file = parser.out_terms_file
     panther_data = load_json(panther_file)
 
     #verify_terms_labels(terms, panther_data)
     #verify_terms_present(terms, panther_data)
 
-    generate_terms_lookup(panther_data)
+    lookup = generate_terms_lookup(panther_data)
+    lines = lookup.keys()
+
+    with open(out_terms_file, "w") as f:
+        f.writelines("%s\n" % l for l in lines if l.startswith('GO'))
 
 
 def generate_terms_lookup(panther_data):
@@ -105,6 +107,7 @@ def parse_arguments():
                         required=True, help='Term Ids and labels file')
     parser.add_argument('--panther_file', dest='panther_file',
                         required=True, help='Panther File')
+    parser.add_argument('--out_terms_file', dest='out_terms_file')
 
     return parser.parse_args()
 
