@@ -1,7 +1,7 @@
 #!/bin/bash 
 
-input='./../../annoq-data/slim-hrc-res'
-outdir='./../../annoq-data/slim-hrc-res-count'
+input='./../../../annoq-data/slim-hrc-res'
+outdir='./../../../annoq-data/slim-hrc-res-count'
 mkdir -p $outdir
 
 for i in `ls $input |grep vcf`; do
