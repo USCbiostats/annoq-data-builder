@@ -1,6 +1,5 @@
 
-import json
-import csv
+
 from os import path as ospath
 from tsv2json import write_to_json
 import pandas as pd
