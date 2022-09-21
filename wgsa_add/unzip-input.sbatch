@@ -5,8 +5,8 @@
 #SBATCH --partition=thomas
 #SBATCH --mem-per-cpu=90G
 
-input='input/TOPMed_09_20'
-output='input_unzipped/TOPMed_09_20'
+input='topmed_8'
+output='unzipped/topmed_8'
 
 mkdir -p $output
 

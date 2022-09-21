@@ -1,8 +1,8 @@
 #!/bin/bash 
 
-in_dir='input/HRC_03_07_19/'
-out_dir='input_unzipped/HRC_03_07_19/'
-slurm_dir='slurm_unzip'
+in_dir='../../topmed_8'
+out_dir='../../unzipped/topmed_8'
+slurm_dir='../../slurm_unzip'
 
 #local testing
 #in_dir='./../../annoq-data/hrc_sample'
@@ -12,7 +12,7 @@ slurm_dir='slurm_unzip'
 mkdir -p $slurm_dir
 mkdir -p $out_dir
 
-for fp in `ls $in_dir|grep .snp.gz$` ; do
+for fp in `ls $in_dir|grep .gz$` ; do
     echo $in_dir/$fp
     STEM=$(basename "${fp}" )
     out_file="chr"$(echo "$STEM" | grep -o -E '[XY0-9]+')".vcf"

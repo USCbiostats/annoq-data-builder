@@ -1,6 +1,3 @@
-
-import json
-import csv
 from os import path as ospath
 from tsv2json import write_to_json
 import pandas as pd
@@ -40,6 +37,8 @@ def parse_arguments():
 
 
 def add_value_type(name):
+    
+    # Order matters
     if 'GO_' in name and 'list_id' in name:
         return 'GO_id'
     if 'GO_' in name and 'list' in name:

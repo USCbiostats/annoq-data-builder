@@ -32,7 +32,7 @@ def main():
                     }
                 }
 
-    mappings['annoq-test']["mappings"]["properties"] = properties
+    mappings["properties"] = properties
     write_to_json(mappings, output_json)
 
 
