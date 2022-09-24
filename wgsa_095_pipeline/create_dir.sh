@@ -1,6 +1,7 @@
 #!/bin/bash 
 
-wgsa_dir='./../wgsa_095'
+((!$#)) && echo No arguments supplied! && exit 1
+wgsa_dir=$1
 
 set -e
 
@@ -17,6 +18,7 @@ mkdir slurm
 mkdir snpeff
 mkdir tmp
 mkdir vep
+mkdir .vep
 mkdir work
 
 chmod 777 work
