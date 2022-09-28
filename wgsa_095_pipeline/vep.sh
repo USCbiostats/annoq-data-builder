@@ -5,11 +5,13 @@ set -e
 
 wgsa_dir=$1
 
+
 cd $wgsa_dir
 cd vep
 
-unzip ../../downloads/100.zip -d .
+unzip ../../downloads/107.zip -d .
 
-cd ensembl-vep-release-100/
+cd ensembl-vep-release-107/
+cache_dir=./../../../wgsa_095/.vep
 
-sudo perl INSTALL.pl -c /$wgsa_dir/.vep --ASSEMBLY GRCh37
+perl INSTALL.pl -c $cashe_dir --ASSEMBLY GRCh37

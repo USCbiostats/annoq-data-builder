@@ -8,3 +8,4 @@ bash create_dir.sh $wgsa_dir
 bash annovar.sh $wgsa_dir
 bash snpeff.sh $wgsa_dir
 bash vep.sh $wgsa_dir
+bash htslib.sh $wgsa_dir
