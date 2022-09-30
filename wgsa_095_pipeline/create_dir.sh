@@ -8,6 +8,7 @@ set -e
 mkdir $wgsa_dir
 cd $wgsa_dir
 
+mkdir scripts
 mkdir annovar20200608
 mkdir configs
 mkdir htslib
