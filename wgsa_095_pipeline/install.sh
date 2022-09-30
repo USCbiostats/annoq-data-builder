@@ -11,6 +11,7 @@ set -e
 #sudo apt-get install libbz2-devel
 #sudo apt-get install xz-devel
 
+sudo yum install bzip2-devel
 sudo yum install zlib-devel
 sudo yum install perl-JSON
 sudo yum install xz-devel
