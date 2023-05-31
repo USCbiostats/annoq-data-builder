@@ -14,4 +14,5 @@ unzip ../../downloads/107.zip -d .
 cd ensembl-vep-release-107/
 cache_dir=./../../../wgsa_095/.vep
 
-perl INSTALL.pl -c $cashe_dir --ASSEMBLY GRCh37
+sudo perl INSTALL.pl -c $cache_dir -r $cache_dir --ASSEMBLY GRCh37 
+sudo perl INSTALL.pl -c $cache_dir -r $cache_dir --ASSEMBLY GRCh38

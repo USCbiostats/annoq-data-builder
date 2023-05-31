@@ -13,9 +13,9 @@ out_dir='output/HRC_03_07_19/'
 slurm_dir='slurm'
 
 #local testing
-#in_dir='./../../annoq-data/slim-hrc'
-#out_dir='./../../annoq-data/slim-hrc-res'
-#slurm_dir='./../../annoq-data/slurm'
+in_dir='./../../annoq-data/slim-hrc'
+out_dir='./../../annoq-data/slim-hrc-res'
+slurm_dir='./../../annoq-data/slurm'
 
 mkdir -p $slurm_dir
 mkdir -p $out_dir
@@ -24,6 +24,6 @@ for fp in `ls $in_dir|grep .vcf$` ; do
     echo $in_dir/$fp
     IN_FILE=$in_dir/${fp} OUT_FILE=$out_dir/${fp} \
     envsubst '$IN_FILE, $OUT_FILE' < hrc_batch.template > $slurm_dir/slurm_${fp}.slurm
-    sbatch $slurm_dir/slurm_${fp}.slurm
+    bash $slurm_dir/slurm_${fp}.slurm
 done
 

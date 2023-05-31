@@ -1,8 +1,8 @@
 #!/bin/bash 
 
-in_dir='../../topmed_8'
-out_dir='../../unzipped/topmed_8'
-slurm_dir='../../slurm_unzip'
+in_dir='./topmed_8'
+out_dir='./unzipped_output/topmed_8'
+slurm_dir='./slurm_unzip'
 
 #local testing
 #in_dir='./../../annoq-data/hrc_sample'

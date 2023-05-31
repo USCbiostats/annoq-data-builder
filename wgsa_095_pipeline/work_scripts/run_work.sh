@@ -3,7 +3,7 @@
 #2 change the name of work_name in script
 #3 run
 #detail WGSA configures can be found under ./scripts
-work_name='TOPMed_09_20'
+work_name='topmed_09_22'
 
 base_dir='/scratch2/mushayah/annoq-data-builder/wgsa_095'
 #have to be abs path
