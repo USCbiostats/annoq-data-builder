@@ -7,21 +7,13 @@ from os import mkdir, path as ospath
 col_names = ["genes",
              "assay",
              "enhancer",
-             "GO_molecular_function_complete_list",
              "GO_molecular_function_complete_list_id",
-             "GO_biological_process_complete_list",
              "GO_biological_process_complete_list_id",
-             "GO_cellular_component_complete_list",
              "GO_cellular_component_complete_list_id",
-             "PANTHER_GO_SLIM_molecular_function_list",
              "PANTHER_GO_SLIM_molecular_function_list_id",
-             "PANTHER_GO_SLIM_biological_process_list",
              "PANTHER_GO_SLIM_biological_process_list_id",
-             "PANTHER_GO_SLIM_cellular_component_list",
              "PANTHER_GO_SLIM_cellular_component_list_id",
-             "REACTOME_pathway_list",
              "REACTOME_pathway_list_id",
-             "PANTHER_pathway_list",
              "PANTHER_pathway_list_id"]
 
 
@@ -37,8 +29,7 @@ def main():
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description='Visualizing the panther data',
-                                     epilog='I hope this works!')
+    parser = argparse.ArgumentParser()
     parser.add_argument('-e', '--enhancer_dir', dest='enhancer_dir', required=True,
                         help='Panther Dir (panther_data, cor_data and annoq_tree)')
     parser.add_argument('-f', '--vcf_path', dest='vcf_path', required=True,
@@ -72,7 +63,7 @@ def add_annotation_header():
     return add_cols
 
 
-def add_annotation_row(row, annotations, deal_res=print):
+def add_annotation_row(row, annotations):
     line = row.rstrip().split("\t")
     chrom, pos = line[0], int(line[1])
     coor = [chrom, pos]
@@ -82,20 +73,19 @@ def add_annotation_row(row, annotations, deal_res=print):
     return add_cols
 
 
-def add_annotation(filepath, annotations, deal_res=print):
+def add_annotation(filepath, annotations):
 
     with open(filepath) as fp:
         row = fp.readline().rstrip()
         add_cols = add_annotation_header()
-        deal_res(add_record(row, add_cols))
+        print(add_record(row, add_cols))
 
         # add info
         while row:
             row = fp.readline().rstrip()
             if row:
-                add_cols = add_annotation_row(
-                    row, annotations, deal_res=deal_res)
-                deal_res(add_record(row, add_cols))
+                add_cols = add_annotation_row(row, annotations)
+                print(add_record(row, add_cols))
 
 
 if __name__ == "__main__":

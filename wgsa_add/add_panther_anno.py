@@ -8,8 +8,8 @@ from utils import add_record, combine_panther_record, convert_tools, parse_tab_a
 def nested_dict(): return defaultdict(nested_dict)
 
 
-exts = [0, 1e4, 2e4]
-anno_tools_cols = [	'ANNOVAR_ensembl_Gene_ID',
+EXTS = [0, 1E4, 2E4]
+ANNO_TOOLS_COLS = [	'ANNOVAR_ensembl_Gene_ID',
                     'ANNOVAR_refseq_Transcript_ID',
                     'SnpEff_ensembl_Gene_ID',
                     'SnpEff_refseq_Transcript_ID',
@@ -93,14 +93,13 @@ def get_tools_prefix(tool_name):
     return name[0] + "_" + name[1] + "_"
 
 
-def add_annotation_header(row, panther_data, deal_res=print, tool_idxs={}, exts=[], anno_tools_cols=None):
+def add_annotation_header(row, panther_data, tool_idxs={}):
 
     col_names = row.split("\t")
     add_cols = []
-    for ext in exts:
-        add_cols += ['flanking_' +
-                     str(int(ext)) + '_' + i for i in panther_data['cols'][1:]]
-    for tool_type in anno_tools_cols:
+    for ext in EXTS:
+        add_cols += ['flanking_' + str(int(ext)) + '_' + i for i in panther_data['cols'][1:]]
+    for tool_type in ANNO_TOOLS_COLS:
         add_cols += [get_tools_prefix(tool_type) +
                      i for i in panther_data['cols'][1:]]
         tool_idxs[tool_type] = col_names.index(tool_type)
@@ -108,38 +107,35 @@ def add_annotation_header(row, panther_data, deal_res=print, tool_idxs={}, exts=
     return add_cols
 
 
-def add_annotation_row(row, annoq_tree, panther_data, gene_coords, deal_res=print,  tool_idxs={}, exts=[], anno_tools_cols=None):
+def add_annotation_row(row, annoq_tree, panther_data, gene_coords, tool_idxs={}):
     add_cols = []
-    for ext in exts:
+    for ext in EXTS:
         add_cols += add_panther_anno_record(row, annoq_tree,
                                             panther_data, gene_coords, ext=ext)
-    for tool_type in anno_tools_cols:
+    for tool_type in ANNO_TOOLS_COLS:
         add_cols += add_tool_based_anno_record(
             row, tool_idxs[tool_type], tool_type, panther_data)
 
     return add_cols
 
 
-def add_annotations(filepath, annoq_tree, panther_data, gene_coords, deal_res=print):
+def add_annotations(filepath, annoq_tree, panther_data, gene_coords):
 
     tool_idxs = {}
 
     with open(filepath) as fp:
         # make column names
         row = fp.readline().rstrip()
-        add_cols = add_annotation_header(row, panther_data, deal_res=deal_res,
-                                         tool_idxs=tool_idxs,
-                                         exts=exts, anno_tools_cols=anno_tools_cols)
-        deal_res(add_record(row, add_cols))
+        add_cols = add_annotation_header(row, panther_data, tool_idxs=tool_idxs)
+        print(add_record(row, add_cols))
         # add info
 
         while row:
             row = fp.readline()
             if row:
-                add_cols = add_annotation_row(row, annoq_tree, panther_data, gene_coords, deal_res=deal_res,
-                                              tool_idxs=tool_idxs, exts=exts, anno_tools_cols=anno_tools_cols)
+                add_cols = add_annotation_row(row, annoq_tree, panther_data, gene_coords,  tool_idxs=tool_idxs)
 
-                deal_res(add_record(row, add_cols))
+                print(add_record(row, add_cols))
 
 
 if __name__ == "__main__":
