@@ -5,7 +5,7 @@ from tools.base import load_json, write_to_json
 
 def remove_labels(json_data):
     # Find indices of cols that end with "_list"
-    list_indices = [i+1 for i, col in enumerate(json_data["cols"]) if col.endswith("_list")]
+    list_indices = [i for i, col in enumerate(json_data["cols"]) if col.endswith("_list")]
 
     # Remove those cols
     json_data["cols"] = [col for i, col in enumerate(json_data["cols"]) if i not in list_indices]

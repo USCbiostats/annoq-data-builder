@@ -1,8 +1,8 @@
 
 import argparse
-from utils import *
-from base import load_json
-from os import mkdir, path as ospath
+from wgsa_add.utils import *
+from wgsa_add.base import load_json
+from os import path as ospath
 
 col_names = ["genes",
              "assay",
@@ -25,7 +25,7 @@ def main():
     annotation_file = ospath.splitext(ospath.basename(vcf_path))[0]
     annotation = load_json(ospath.join(enhancer_dir, annotation_file+'.json'))
 
-    add_annotation(vcf_path, annotation, lambda x: print(x.rstrip()))
+    add_annotation(vcf_path, annotation)
 
 
 def parse_arguments():
