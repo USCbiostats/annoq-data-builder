@@ -48,3 +48,6 @@ if __name__ == "__main__":
 
 # python3 tools/tsv2json.py -i ./../annoq-data/slim-hrc-res/chr21.vcf -o ./../annoq-data/tmp5_
 # python3 tools/tsv2json.py -i ./../annoq-data/tree.csv -o ./../annoq-data/anno_tree.json -d ,
+
+
+# python3 tools/tsv2json.py -i ./resources/test_wgsa_add//output/chr18.vcf -o ./resources/test_wgsa_add/output_json/chr18.json

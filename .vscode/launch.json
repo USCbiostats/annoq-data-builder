@@ -36,7 +36,7 @@
             "request": "launch",
             "module": "wgsa_add.add_annotations",
             "args": [
-                "-f",  "./resources/test_wgsa_add/input/chr21.vcf",
+                "-f",  "./resources/test_wgsa_add/input/chr18.vcf",
                 "-p",  "./resources/panther",
                 "-e",  "./../annoq-data/enhancer/enhancer_map"
             ],

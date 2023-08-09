@@ -1,6 +1,7 @@
 import argparse
 from os import path as ospath
 from collections import defaultdict
+from wgsa_add.clean_annotations import clean_line
 from wgsa_add.utils import *
 from wgsa_add.base import load_json, load_pickle
 from wgsa_add.add_panther_anno import add_annotation_header as add_panther_annotation_header
@@ -63,7 +64,9 @@ def add_annotations(filepath, annotations, annoq_tree, panther_data, gene_coords
                                                   tool_idxs=tool_idxs)
                 cols += add_enhancer_annotation_row( row, annotations)
 
-                print_line(add_record(row, cols))
+                record = add_record(row, cols).strip()
+                cleaned_record = clean_line(record)
+                print(cleaned_record)
 
 
 if __name__ == "__main__":
