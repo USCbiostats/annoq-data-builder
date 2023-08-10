@@ -5,7 +5,6 @@
 #SBATCH --partition=thomas
 #SBATCH --mem-per-cpu=50G
 #SBATCH --mail-type=end, fail
-#SBATCH --mail-user=mushayah@usc.edu
 
 
 in_file='$IN_FILE'

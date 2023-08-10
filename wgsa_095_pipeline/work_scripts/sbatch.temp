@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --ntasks=1 
-#SBATCH --time=90:00:00
+#SBATCH --time=120:00:00
 #SBATCH --account=pdthomas_136
 #SBATCH --partition=thomas
-#SBATCH --mem-per-cpu=50G
+#SBATCH --mem-per-cpu=40G
 #SBATCH --mail-type=end, fail
-#SBATCH --mail-user=tmtrigga@gmail.com
+#SBATCH --mail-user=[your-email]
 
 
 cd {base}

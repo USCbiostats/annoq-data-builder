@@ -3,11 +3,18 @@
 #2 change the name of work_name in script
 #3 run
 #detail WGSA configures can be found under ./scripts
-work_name='topmed_09_22'
 
-base_dir='/scratch2/mushayah/annoq-data-builder/wgsa_095'
-#have to be abs path
 
+if [ "$#" -ne 2 ]; then
+  echo "Error: Exactly 2 arguments are required."
+  echo "Usage: $0 <work_name> <wgsa_dir>"
+  exit 1
+fi
+
+work_name=$1
+base_dir=$2
+
+echo "running work name: $work_name using base dir: $base_dir"
 
 input_dir=$base_dir/input/$work_name
 config_dir=$base_dir/configs/$work_name
