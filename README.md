@@ -29,7 +29,7 @@ bash wgsa_095_pipeline/create_dir.sh wgsa_095
 cd wgsa_095
 ```
 
-Download WGSA.class and annotation resources from [WGSA Download Page](http://web.corral.tacc.utexas.edu/WGSAdownload/).
+Download WGSA.class and annotation resources from [WGSA Page](https://sites.google.com/site/jpopgen/wgsa).
 
 Install ANNOVAR, VEP, and SnpEff. See the provided URL for instructions.
 
