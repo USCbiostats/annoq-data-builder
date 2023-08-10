@@ -1,13 +1,13 @@
 import argparse
+from os import path as ospath
 from collections import defaultdict
-from utils import *
-from base import load_json, load_pickle
-from os import mkdir, path as ospath
-from add_panther_anno import exts, anno_tools_cols
-from add_panther_anno import add_annotation_header as add_panther_annotation_header
-from add_panther_anno import add_annotation_row as add_panther_annotation_row
-from add_enhancer_anno import add_annotation_header as add_enhancer_annotation_header
-from add_enhancer_anno import add_annotation_row as add_enhancer_annotation_row
+from wgsa_add.clean_annotations import clean_line
+from wgsa_add.utils import *
+from wgsa_add.base import load_json, load_pickle
+from wgsa_add.add_panther_anno import add_annotation_header as add_panther_annotation_header
+from wgsa_add.add_panther_anno import add_annotation_row as add_panther_annotation_row
+from wgsa_add.add_enhancer_anno import add_annotation_header as add_enhancer_annotation_header
+from wgsa_add.add_enhancer_anno import add_annotation_row as add_enhancer_annotation_row
 
 
 def nested_dict(): return defaultdict(nested_dict)
@@ -29,13 +29,11 @@ def main():
     gene_coords = {i[2]: (i[1][1], i[1][2]) for i in coord_data}
     # [ENSG_id, (contig, start, end), HGNC_id]
 
-    add_annotations(vcf_path, annotation, annoq_tree,
-                    panther_data, gene_coords, lambda x: print(x.rstrip()))
+    add_annotations(vcf_path, annotation, annoq_tree, panther_data, gene_coords)
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description='Visualizing the panther data',
-                                     epilog='I hope this works!')
+    parser = argparse.ArgumentParser()
     parser.add_argument('-e', '--enhancer_dir', dest='enhancer_dir', required=True,
                         help='Panther Dir (panther_data, cor_data and annoq_tree)')
     parser.add_argument('-p', '--panther_dir', dest='panther_dir', required=True,
@@ -46,28 +44,33 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def add_annotations(filepath, annotations, annoq_tree, panther_data, gene_coords, deal_res=print):
+def add_annotations(filepath, annotations, annoq_tree, panther_data, gene_coords):
 
     tool_idxs = {}
     with open(filepath) as fp:
         row = fp.readline().rstrip()
 
-        cols = add_panther_annotation_header(row, panther_data, deal_res=deal_res,
-                                             tool_idxs=tool_idxs, exts=exts, anno_tools_cols=anno_tools_cols)
+        cols = add_panther_annotation_header(row, 
+                                             panther_data, 
+                                             tool_idxs=tool_idxs)
         cols += add_enhancer_annotation_header()
 
-        deal_res(add_record(row, cols))
+        print_line(add_record(row, cols))
         # add info
         while row:
             row = fp.readline().rstrip()
             if row:
-                cols = add_panther_annotation_row(row, annoq_tree, panther_data, gene_coords, deal_res=deal_res,
-                                                  tool_idxs=tool_idxs, exts=exts, anno_tools_cols=anno_tools_cols)
-                cols += add_enhancer_annotation_row(
-                    row, annotations, deal_res=deal_res)
+                cols = add_panther_annotation_row(row, annoq_tree, panther_data, gene_coords,
+                                                  tool_idxs=tool_idxs)
+                cols += add_enhancer_annotation_row( row, annotations)
 
-                deal_res(add_record(row, cols))
+                record = add_record(row, cols).strip()
+                cleaned_record = clean_line(record)
+                print(cleaned_record)
 
 
 if __name__ == "__main__":
     main()
+
+
+#python3 -m wgsa_add.add_annotations -f ./resources/test_wgsa_add/input/chr2.vcf -p resources/panther -e ./../annoq-data/enhancer/enhancer_map/ > resources/test_wgsa_add/output/chr2.vcf

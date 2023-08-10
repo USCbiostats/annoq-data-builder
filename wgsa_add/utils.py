@@ -2,8 +2,10 @@
 import json
 
 
-hgnc_file = './../../annoq-data/wgsa_add/hgnc.txt'
+hgnc_file = './../annoq-data/wgsa_add/hgnc.txt'
 
+def print_line(line: str):
+    print(line.strip())
 
 def load_hgnc_ensg_to_hgnc_table(filepath=hgnc_file, debug=False):
     f = open(filepath, encoding="utf-8")
@@ -27,6 +29,7 @@ def load_hgnc_ensg_to_hgnc_table(filepath=hgnc_file, debug=False):
             mapping[ensg] = [hgnc_id]
     return mapping
 
+ensg_to_hgnc_table = load_hgnc_ensg_to_hgnc_table()
 
 def combine_record(r_list, seq='|'):
     first = r_list[0][:]
@@ -36,63 +39,8 @@ def combine_record(r_list, seq='|'):
     return first
 
 
-def combine_panther_record(ids, panther_data, sep='|'):
-    panther_record_length = len(panther_data['cols']) - 1
-    ids = [i for i in ids if i in panther_data['data']]
-    if not ids:
-        return ['.' for i in range(panther_record_length)]
-    res = [[] for i in range(panther_record_length)]
-    for pid in ids:
-        anno = panther_data['data'][pid]
-        for idx in range(0, panther_record_length, 2):
-            cur_data = anno[idx].split(sep)
-            follow_data = anno[idx + 1].split(sep)
-            for i in range(len(cur_data)):
-                if cur_data[i] == '.' and follow_data[i] == '.':
-                    continue
-                if not cur_data[i] in res[idx]:
-                    res[idx].append(cur_data[i])
-                    res[idx + 1].append(follow_data[i])
-    for idx in range(len(res)):
-        if not res[idx]:
-            res[idx] = '.'
-    return list(map(lambda x: sep.join(x), res))
-
-
-def parse_tab_anno_record(r):
-    (chrom, pos) = r.split("\t")[:2]
-    return chrom, int(pos)
-
-
 def add_record(r, add_info, sep='\t'):
     return r.rstrip() + sep + sep.join(add_info) + '\n'
-
-
-def load_hgnc_ensg_to_hgnc_table(filepath=hgnc_file, debug=False):
-    f = open(filepath, encoding="utf-8")
-    f.readline()
-    mapping = {}
-    for i in f:
-        line = i.rstrip().split('\t')
-        try:
-            hgnc_id, ensg = line[0], line[9]
-        except:
-            if debug:
-                print('error in line:')
-                print(i)
-                print(len(line))
-            continue
-        if ensg == '':
-            continue
-        if mapping.get(ensg):
-            mapping[ensg].append(hgnc_id)
-        else:
-            mapping[ensg] = [hgnc_id]
-    return mapping
-
-
-ensg_to_hgnc_table = load_hgnc_ensg_to_hgnc_table()
-# ensg_to_hgnc_table
 
 
 def convert_ensg_hgnc(ensg):

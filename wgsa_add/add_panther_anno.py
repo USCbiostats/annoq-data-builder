@@ -1,15 +1,14 @@
 import argparse
-from collections import defaultdict
-from base import load_json, load_pickle
 from os import path as ospath
-from utils import add_record, combine_panther_record, convert_tools, parse_tab_anno_record
-
+from collections import defaultdict
+from wgsa_add.base import load_json, load_pickle
+from wgsa_add.utils import add_record, convert_tools, print_line
 
 def nested_dict(): return defaultdict(nested_dict)
 
 
-exts = [0, 1e4, 2e4]
-anno_tools_cols = [	'ANNOVAR_ensembl_Gene_ID',
+EXTS = [0, 1E4, 2E4]
+ANNO_TOOLS_COLS = [	'ANNOVAR_ensembl_Gene_ID',
                     'ANNOVAR_refseq_Transcript_ID',
                     'SnpEff_ensembl_Gene_ID',
                     'SnpEff_refseq_Transcript_ID',
@@ -29,8 +28,7 @@ def main():
     gene_coords = {i[2]: (i[1][1], i[1][2]) for i in coord_data}
     # [ENSG_id, (contig, start, end), HGNC_id]
 
-    add_annotations(vcf_path, annoq_tree,
-                    panther_data, gene_coords, lambda x: print(x.rstrip()))
+    add_annotations(vcf_path, annoq_tree, panther_data, gene_coords)
 
 
 def parse_arguments():
@@ -42,6 +40,7 @@ def parse_arguments():
                         help='VCF file')
 
     return parser.parse_args()
+
 
 
 def get_dist(g_name, gene_cor_dict, pos):
@@ -65,7 +64,8 @@ def get_nearest_gene(gene_cor_dict, pids, pos):
 
 
 def add_panther_anno_record(r, anno_tree, panther_data, gene_coords, ext=0, strand=['-1', '1']):
-    (chrom, pos) = parse_tab_anno_record(r)
+    (chrom, pos) = r.split("\t")[:2]
+    pos = int(pos)
     pids = []
     for s in strand:
         pids += [i.data for i in anno_tree[ext][chrom][s][pos]]
@@ -93,14 +93,13 @@ def get_tools_prefix(tool_name):
     return name[0] + "_" + name[1] + "_"
 
 
-def add_annotation_header(row, panther_data, deal_res=print, tool_idxs={}, exts=[], anno_tools_cols=None):
+def add_annotation_header(row, panther_data, tool_idxs={}):
 
     col_names = row.split("\t")
     add_cols = []
-    for ext in exts:
-        add_cols += ['flanking_' +
-                     str(int(ext)) + '_' + i for i in panther_data['cols'][1:]]
-    for tool_type in anno_tools_cols:
+    for ext in EXTS:
+        add_cols += ['flanking_' + str(int(ext)) + '_' + i for i in panther_data['cols'][1:]]
+    for tool_type in ANNO_TOOLS_COLS:
         add_cols += [get_tools_prefix(tool_type) +
                      i for i in panther_data['cols'][1:]]
         tool_idxs[tool_type] = col_names.index(tool_type)
@@ -108,38 +107,55 @@ def add_annotation_header(row, panther_data, deal_res=print, tool_idxs={}, exts=
     return add_cols
 
 
-def add_annotation_row(row, annoq_tree, panther_data, gene_coords, deal_res=print,  tool_idxs={}, exts=[], anno_tools_cols=None):
-    add_cols = []
-    for ext in exts:
-        add_cols += add_panther_anno_record(row, annoq_tree,
-                                            panther_data, gene_coords, ext=ext)
-    for tool_type in anno_tools_cols:
-        add_cols += add_tool_based_anno_record(
+def add_annotation_row(row, annoq_tree, panther_data, gene_coords, tool_idxs={}):
+    added_cols = []
+    for ext in EXTS:
+        added_cols += add_panther_anno_record(row, annoq_tree, panther_data, gene_coords, ext=ext)
+    for tool_type in ANNO_TOOLS_COLS:
+        added_cols += add_tool_based_anno_record(
             row, tool_idxs[tool_type], tool_type, panther_data)
 
-    return add_cols
+    return added_cols
 
 
-def add_annotations(filepath, annoq_tree, panther_data, gene_coords, deal_res=print):
+def add_annotations(filepath, annoq_tree, panther_data, gene_coords):
 
     tool_idxs = {}
 
     with open(filepath) as fp:
         # make column names
         row = fp.readline().rstrip()
-        add_cols = add_annotation_header(row, panther_data, deal_res=deal_res,
-                                         tool_idxs=tool_idxs,
-                                         exts=exts, anno_tools_cols=anno_tools_cols)
-        deal_res(add_record(row, add_cols))
+        add_cols = add_annotation_header(row, panther_data, tool_idxs=tool_idxs)
+        print_line(add_record(row, add_cols))
         # add info
 
         while row:
             row = fp.readline()
             if row:
-                add_cols = add_annotation_row(row, annoq_tree, panther_data, gene_coords, deal_res=deal_res,
-                                              tool_idxs=tool_idxs, exts=exts, anno_tools_cols=anno_tools_cols)
+                add_cols = add_annotation_row(row, annoq_tree, panther_data, gene_coords,  tool_idxs=tool_idxs)
 
-                deal_res(add_record(row, add_cols))
+                print_line(add_record(row, add_cols))
+                
+                
+def combine_panther_record(ids, panther_data, sep='|'):
+    panther_record_length = len(panther_data['cols']) - 1
+    ids = [i for i in ids if i in panther_data['data']]
+    if not ids:
+        return ['.' for i in range(panther_record_length)]
+    res = [[] for i in range(panther_record_length)]
+    for pid in ids:
+        anno = panther_data['data'][pid]
+        for idx in range(0, panther_record_length):
+            cur_data = anno[idx].split(sep)
+            for i in range(len(cur_data)):
+                if cur_data[i] == '.':
+                    continue
+                if not cur_data[i] in res[idx]:
+                    res[idx].append(cur_data[i])
+    for idx in range(len(res)):
+        if not res[idx]:
+            res[idx] = '.'
+    return list(map(lambda x: sep.join(x), res))
 
 
 if __name__ == "__main__":

@@ -39,3 +39,8 @@ def load_json(filepath):
 def load_pickle(filepath):
     with open(filepath, 'rb') as f:
         return pickle.load(f)
+
+
+def write_to_json(data, output_file, indent=None):
+    with open(output_file, 'w', encoding='utf-8') as outfile:
+        json.dump(data, outfile, ensure_ascii=False, indent=indent)

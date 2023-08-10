@@ -13,9 +13,9 @@ out_dir='output/HRC_03_07_19/'
 slurm_dir='slurm'
 
 #local testing
-in_dir='./../../annoq-data/slim-hrc'
-out_dir='./../../annoq-data/slim-hrc-res'
-slurm_dir='./../../annoq-data/slurm'
+in_dir='resources/test_wgsa_add/input'
+out_dir='resources/test_wgsa_add/output'
+slurm_dir='resources/test_wgsa_add/slurm'
 
 mkdir -p $slurm_dir
 mkdir -p $out_dir

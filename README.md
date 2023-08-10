@@ -1,85 +1,92 @@
-# Data Admin
+# AnnoQ Data Builder
 
+## Part 1: AnnoQ WGS Annotator (WGSA) - Version 095
 
+WGSA is an annotation pipeline designed for human genome re-sequencing studies. It integrates various annotation resources and bioinformatics tools to provide comprehensive annotations for both single nucleotide variants (SNVs) and insertions/deletions (indels).
 
-## WGSA 08
-repo for running WGSA on HPC
+### Directory Structure
 
-### directory structure
+- annovar20200608: ANNOVAR installation directory
+- configs: Configuration files for running WGSA
+- htslib: HTSlib installation directory
+- input: Input files (e.g., input/dbSNP/10.vcf)
+- res: Result folder
+- resources: Annotation resources (very large)
+- scripts: Scaffold scripts and configuration file templates
+- slurm: Automatically generated SLURM scripts
+- snpeff: SnpEff installation directory
+- tmp: Temporary files
+- vep: VEP installation directory
+- work: Work directory
+- WGSA08.class: WGSA class file
 
-* annovar20180416
-* configs
-* htslib
-* input
-* README.md
-* res
-* resources
-* run_work.sh
-* scripts
-* slurm
-* snpeff
-* tmp
-* vep
-* WGSA08.class
-* work
+### Installation
 
-### set
+Create the directory structure:
 
-`cd wgsa_08`
+```bash
+bash wgsa_095_pipeline/create_dir.sh wgsa_095
+cd wgsa_095
+```
 
-`sh init.sh`
+Download WGSA.class and annotation resources from [WGSA Page](https://sites.google.com/site/jpopgen/wgsa).
 
-download WGSA.class
-download annotation resources 
-from [http://web.corral.tacc.utexas.edu/WGSAdownload/](http://web.corral.tacc.utexas.edu/WGSAdownload/)
+Install ANNOVAR, VEP, and SnpEff. See the provided URL for instructions.
 
-and install annovar20180416, vep and snpeff. See [url](https://sites.google.com/site/jpopgen/wgsa/setting-up-wgsa-linux)
+### Usage
 
-### annotation resources
+Create a new directory in the input folder and place all input VCF files in it.
 
-* resources (very large)
+Modify run_work.sh (e.g., run_work.dbSNP.sh).
 
-### independent tools are installed in 
+### Run Work Scripts
 
-* annovar20180416
-* vep
-* snpeff
-* htslib
+- config.py: Generates specific configurations for each VCF file using a template (config.temp).
+- sbatch.py: Creates SLURM batch files for each VCF file, based on the sbatch.temp template.
+- sbatch.temp: A template for an HPC SLURM batch file, specifying resources and running the WGSA pipeline.
 
-### input file put in 
+These scripts are integrated into the run_work.sh workflow and can be customized as needed.
 
-* input
+#### More Detail
 
-e.g. input/dbSNP/10.vcf
+**config.py**
+This Python script reads a template file (config.temp) and takes five command-line arguments to format the template with specific paths for the base directory, input, output, work, and temporary directories. The formatted template is then printed to the standard output.
 
-### configure files for running WGSA will be generated in
+**sbatch.py**
+This Python script reads a template file (sbatch.temp) and takes five command-line arguments to format the template with specific paths for the base directory, configuration file, configuration directory, SLURM output, and SLURM error logs. The formatted template is then printed to the standard output.
 
-configs
+**sbatch.temp**
+This is a template for an HPC SLURM batch file. It specifies the resources required for the job (e.g., number of tasks, time, memory) and includes placeholders for various paths and configurations. The script loads the Java Development Kit (JDK) module, runs the WGSA pipeline with specific parameters, and executes a bash script to redirect the output and error logs.
 
-### result folder
+### Integration with run_work.sh
 
-res
+The run_work.sh script utilizes these files as part of the workflow:
 
-### Scaffold scripts and configure file templates
+- It uses config.py to generate specific configurations for each VCF file.
+- It uses sbatch.py to create SLURM batch files for each VCF file, based on the sbatch.temp template.
+- It submits the SLURM batch files to the HPC cluster for processing.
 
-scripts
+### Run the script
 
-### automatic generated slurm scripts
+!important: Make sure you know what's in the script and change placeholder values
 
-* slurm
+```bash
+bash run_work.sh [work_name] [base_wgsa_dir]
+```
 
-see scripts/sbatch.temp
+where
+work_name might be HRC_2023 and
+base_wgsa_dir is the base abs path for your wgsa resources folder created above  i.e. /scratch2/username/annoq_data_builder/wgsa_095
 
-### temporary files will put in 
-tmp
-work
+### Output
 
+Results will be generated in the res folder.
+Temporary files will be placed in the tmp and work directories.
+SLURM scripts can be found in the slurm directory (see scripts/sbatch.temp).
 
-### for running a new job
+## Part 2: AnnoQ Adding PANTHER and ENHANCER annotations
 
-1. mkdir in input folder and put all input vcf files in it
-2. modify run_work.sh e.g. run_work.dbSNP.sh
-3. sh run_work.sh
+# To Be Continued, this is Old DOc
 
 ## Running Decode Pickle for visualization 
 
