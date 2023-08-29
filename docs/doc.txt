@@ -1,0 +1,11 @@
+set up WGSA
+run WGSA
+Add Functional Annotations
+    Add Panther Annotations
+    Add Enhancer Annotations
+    Clean Annotations
+Prepare Elastic Search Data
+Load Elastic Search
+Run Elasticsearch
+Run API
+Run Site

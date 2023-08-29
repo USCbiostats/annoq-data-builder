@@ -2,7 +2,7 @@
 import json
 
 
-hgnc_file = './../annoq-data/wgsa_add/hgnc.txt'
+hgnc_file = 'annoq-data/wgsa_add/hgnc.txt'
 
 def print_line(line: str):
     print(line.strip())
