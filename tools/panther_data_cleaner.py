@@ -1,5 +1,4 @@
 import argparse
-import json
 
 from tools.base import load_json, write_to_json
 
