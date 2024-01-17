@@ -200,8 +200,7 @@ def main():
             ## Create final json structure
             param_cols = "cols"
             param_data = "data"    
-            all_data = {param_cols : ["panther_id",
-                                    "GO_molecular_function_complete_list",
+            all_data = {param_cols : ["GO_molecular_function_complete_list",
                                     "GO_molecular_function_complete_list_id",
                                     "GO_biological_process_complete_list",
                                     "GO_biological_process_complete_list_id",
