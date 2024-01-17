@@ -1,0 +1,26 @@
+{
+  "cols": [
+    "GO_molecular_function_complete_list_id",
+    "GO_biological_process_complete_list_id",
+    "GO_cellular_component_complete_list_id",
+    "PANTHER_GO_SLIM_molecular_function_list_id",
+    "PANTHER_GO_SLIM_biological_process_list_id",
+    "PANTHER_GO_SLIM_cellular_component_list_id",
+    "PANTHER_GO_SLIM_protein_class_list_id",
+    "REACTOME_pathway_list_id",
+    "PANTHER_pathway_list_id"
+  ],
+  "data": {
+    "HGNC:2602": [
+      "GO:0008403|GO:0020037|GO:0030342|GO:0062181|GO:0005506|GO:0070643|GO:0062180",
+      "GO:0070561|GO:0001649|GO:0006766|GO:0042369|GO:0033280|GO:0042359",
+      "GO:0005743",
+      "GO:0016705|GO:0004497",
+      "GO:0044282|GO:1901700|GO:0033993|GO:0014070|GO:0006706|GO:0007584|GO:0044248|GO:1901615",
+      "GO:0005739",
+      "PC00177",
+      "R-HSA-211897|R-HSA-211945|R-HSA-211859|R-HSA-211916|R-HSA-1430728|R-HSA-556833|R-HSA-196791|R-HSA-1643685|R-HSA-5579010|R-HSA-5579029|R-HSA-5668914|R-HSA-8957322",
+      "P04396"
+    ]
+  }
+}
