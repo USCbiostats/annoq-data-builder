@@ -30,4 +30,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-#python3 -m tools.panther_data_cleaner -i ../annoq-data/enhancer/panther_data.json -o ../annoq-data/enhancer/panther_no_labels_data.json
+#python3 -m tools.panther_data_cleaner -i resources/panther/panther_data.json -o resources/panther/panther_data_no_labels.json

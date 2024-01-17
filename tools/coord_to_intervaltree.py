@@ -10,6 +10,8 @@ from collections import defaultdict
 parser = argparse.ArgumentParser()
 parser.add_argument('-p', '--pep_fasta')
 parser.add_argument('-i', '--idmapping')
+parser.add_argument('-o', '--out_json')
+
 parser.add_argument('-j', '--json', action='store_const',
                     const=True, help="Output intervals as list using as_json()")
 
@@ -127,7 +129,6 @@ if __name__ == "__main__":
 
     if args.json:
         interval_jsons = [i.as_json() for i in itree]
-        print(json.dumps(interval_jsons))
     else:
         [print(i) for i in itree]
 
@@ -136,5 +137,5 @@ if __name__ == "__main__":
     for i in itree:
         add_flanking_region(i, annoq_tree)
 
-    write_to_json(annoq_tree, "outfile_temp_3.json")
-    write_to_pickle(annoq_tree, "annoq_tree.pkl")
+    write_to_json(annoq_tree,  args.out_json.replace(".pkl", ".json"), indent=2)
+    write_to_pickle(annoq_tree, args.out_json)

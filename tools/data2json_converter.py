@@ -6,7 +6,6 @@ import time
 import shutil
 from os import path
 from base import load_json
-from terms_loader import generate_terms_lookup, get_term
 from os import mkdir, path as ospath
 
 parser = argparse.ArgumentParser()
@@ -25,7 +24,6 @@ output_columns = [
     "gene",
 ]
 
-TERMS_LOOKUP = None
 COORDINATES_LOOKUP = None
 PANTHER_LOOKUP = None
 OUT_JSON = None
@@ -101,6 +99,7 @@ class EnahancerGene:
         self.chr_map[self.record['chrNum']].append({**self.record})
 
         self.reset_record()
+        
 
     def get_hgnc_id(self, gene_id):
         if gene_id == None:
@@ -111,37 +110,29 @@ class EnahancerGene:
             return idx_parts[1].replace('=', ':')
 
         return gene_id.strip()
+    
 
     def add_enhancer_genes(self, genes):
         panther_lookup = PANTHER_LOOKUP
 
-        cols = panther_lookup['cols'][1:]
-        id_headers = cols[1::2]
-        label_headers = cols[0::2]
+        cols = panther_lookup['cols']
         panther_data = panther_lookup['data']
         data = dict()
 
         hgnc_ids = [self.get_hgnc_id(gene) for gene in genes]
 
         # initialize the data
-        for i, id_col in enumerate(id_headers):
-            data[id_headers[i]] = list()
-            data[label_headers[i]] = list()
+        for i, id_col in enumerate(cols):
+            data[cols[i]] = list()
 
         for hgnc_id in hgnc_ids:
             annotations = panther_data.get(hgnc_id) or []
             #print(hgnc_id, self.get_hgnc_id(hgnc_id), annotations)
 
-            id_cols = annotations[1::2]
-            for i, id_col in enumerate(id_cols):
-                for term_id in id_col.split('|'):
-                    if term_id != "" and term_id not in data[id_headers[i]]:
-                        term = TERMS_LOOKUP[term_id]
-                        if term == None:
-                            raise ValueError(f"{term_id}not equal")
-
-                        data[label_headers[i]].append(term['label'])
-                        data[id_headers[i]].append(term['id'])
+            for i, annotation in enumerate(annotations):
+                for term_id in annotation.split('|'):
+                    if term_id != "" and term_id not in data[cols[i]]:
+                       data[cols[i]].append(term_id)
 
         return data
 
@@ -225,9 +216,6 @@ def main():
 
     global PANTHER_LOOKUP
     PANTHER_LOOKUP = load_json(panther_file)
-
-    global TERMS_LOOKUP
-    TERMS_LOOKUP = generate_terms_lookup(PANTHER_LOOKUP)
 
     global OUT_JSON
     OUT_JSON = args.out_json

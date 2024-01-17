@@ -68,10 +68,10 @@ class IntervalTreeEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def write_to_json(data, output_file):
+def write_to_json(data, output_file, indent=None):
     with open(output_file, 'w', encoding='utf-8') as outfile:
         json.dump(data, outfile, cls=IntervalTreeEncoder,
-                  ensure_ascii=False, indent=4)
+                  ensure_ascii=False, indent=indent)
 
 
 def write_to_pickle(data, output_file):
