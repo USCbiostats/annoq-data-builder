@@ -84,7 +84,121 @@ Results will be generated in the res folder.
 Temporary files will be placed in the tmp and work directories.
 SLURM scripts can be found in the slurm directory (see scripts/sbatch.temp).
 
+
 ## Part 2: AnnoQ Adding PANTHER and ENHANCER annotations
+
+
+### Part 2.1 Pre-Work Script for Annotation Preparation
+
+This part scripts designed for data preparation and processing, a crucial pre-step for before adding annotations. The scripts automate various tasks to clean and organize data for efficient annotation.
+
+## Overview
+
+The `tools/scripts/run_pre_work.sh` script automates several Python scripts, each handling a specific part of data preparation. This script streamlines the process, ensuring data is correctly formatted and optimized for future AnnoQ tasks.
+
+## Pre-Work Process Steps
+
+1. **Extracting Terms from Panther Data**: 
+   This step extracts terms from the `panther_data.json` file to create a map of IDs and labels. This map is essential for future term label lookups on the site.
+
+2. **Removing Labels from Panther Data**:
+   Labels are not required in the Elasticsearch index, so this step removes them from the `panther_data.json` file, resulting in a cleaner dataset for indexing.
+
+3. **Creating an Interval Tree**:
+   An interval tree is generated for quick searches and efficient data retrieval, using the `Homo_sapiens.GRCh38.pep.all.fa` and `UP000005640_9606.idmapping` files.
+
+4. **Creating an Enhancer Map**:
+   The final step creates an enhancer map using the label-free `panther_data.json` file. This map facilitates faster data annotation processes.
+
+### Data Transformation Example
+
+#### Panther Data Sample Before Processing
+
+The `panther_data.json` initially contains columns for both labels and IDs. For example:
+
+```json
+{
+  "cols": [
+    "GO_molecular_function_complete_list",
+    "GO_molecular_function_complete_list_id",
+    // other columns...
+  ],
+  "data": {
+    "HGNC:2602": [
+      "label1|label2|label3",
+      "GO:0008403|GO:0020037|GO:0030342",
+      // other data...
+    ]
+  }
+}
+```
+
+### Panther Data After Term Removal
+
+The script processes this file to remove label columns, leaving only the ID columns:
+
+```json
+
+{
+  "cols": [
+    "GO_molecular_function_complete_list_id",
+    // other columns...
+  ],
+  "data": {
+    "HGNC:2602": [
+      "GO:0008403|GO:0020037|GO:0030342",
+      // other data...
+    ]
+  }
+}
+
+```
+
+### Panther Terms Output
+
+The extracted terms are then formatted as a simple key-value pair:
+
+```json
+{
+  "GO:0010070": {
+    "id": "GO:0010070",
+    "label": "zygote asymmetric cell division"
+  },
+  // other terms...
+}
+```
+
+### Enhancer Map Output
+
+The enhancer map is an expanded file, formatted for quick reference and efficient processing:
+
+```json
+[
+    {
+        "chrNum": "chr21",
+        // other enhancer data...
+        "data": {
+            "GO_molecular_function_complete_list_id": ["GO:0004620", /* more IDs */],
+            // other data...
+        }
+    },
+    // other entries...
+]
+```
+
+Usage
+Run the script with the command below from the repository's root directory:
+
+```bash
+bash tools/scripts/run_pre_work.sh ./../annoq_data
+```
+
+Ensure the annoq_data directory is correctly located relative to the script's path.
+
+
+
+
+
 
 # To Be Continued, this is Old DOc
 

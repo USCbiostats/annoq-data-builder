@@ -1,4 +1,0 @@
-1	ChIA-PET
-2	single-tissue eQTL
-3	Topologically Associated Domain
-4	interaction TAD
