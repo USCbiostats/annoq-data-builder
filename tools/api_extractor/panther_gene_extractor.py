@@ -44,7 +44,6 @@ def add_genes_to_lookup(gene_list_json, lookup):
     if gene_list_json is None:
         exit_with_msg('Unable to process information from ' + json.dumps(gene_list_json, sort_keys=False, indent=4))
     for gene in gene_list_json:
-        panther_id = ""
         GO_molecular_function_complete_list = ""
         GO_molecular_function_complete_list_id = ""        
         GO_biological_process_complete_list = ""
@@ -200,8 +199,7 @@ def main():
             ## Create final json structure
             param_cols = "cols"
             param_data = "data"    
-            all_data = {param_cols : ["panther_id",
-                                    "GO_molecular_function_complete_list",
+            all_data = {param_cols : ["GO_molecular_function_complete_list",
                                     "GO_molecular_function_complete_list_id",
                                     "GO_biological_process_complete_list",
                                     "GO_biological_process_complete_list_id",
