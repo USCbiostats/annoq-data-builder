@@ -10,8 +10,9 @@
 base_dir='$BASE_DIR'
 in_file='$IN_FILE'
 out_file='$OUT_FILE'
-panther_dir=$base_dir/annoq-data/wgsa_add
-enhancer_dir=$base_dir/annoq-data/enhancer/enhancer_map
+anno_data_dir='$ANNOQ_DATA_DIR'
+panther_dir=$anno_data_dir/output
+enhancer_dir=$anno_data_dir/output/enhancer_map
 
 #module load python/3.9.2
 python3 --version

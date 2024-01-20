@@ -20,7 +20,7 @@ def main():
     vcf_path = parser.vcf_path
 
     annoq_tree = load_pickle(ospath.join(panther_dir, 'annoq_tree.pkl'))
-    panther_data = load_json(ospath.join(panther_dir, 'panther_data.json'))
+    panther_data = load_json(ospath.join(panther_dir, 'panther_data_no_labels.json'))
     coord_data = load_json(ospath.join(panther_dir, 'coords_data.json'))
 
     annotation_file = ospath.splitext(ospath.basename(vcf_path))[0]

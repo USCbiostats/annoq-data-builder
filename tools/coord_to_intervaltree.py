@@ -139,3 +139,5 @@ if __name__ == "__main__":
 
     write_to_json(annoq_tree,  args.out_json.replace(".pkl", ".json"), indent=2)
     write_to_pickle(annoq_tree, args.out_json)
+    
+    write_to_json(interval_jsons, args.out_json.replace(".pkl", "coords.json"), indent=2) 
