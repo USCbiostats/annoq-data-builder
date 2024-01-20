@@ -4,9 +4,11 @@ import json
 import shutil
 from os import mkdir, path as ospath
 import argparse
+from collections import defaultdict
 from intervaltree import IntervalTree
 from base import ROOT_DIR
 
+def nested_dict(): return defaultdict(nested_dict)
 
 def main():
     parser = parse_arguments()
@@ -22,7 +24,7 @@ def main():
         # write each high level dict key, panther data, anno_tree, etc,
         for key, val in thawed.items():
             print(key)
-            write_to_json(val, ospath.join(output_dir, key+'.json'))
+            write_to_json(val, ospath.join(output_dir, str(key)+'.json'), indent=2)
             #write_to_pickle(val, ospath.join(output_dir, key+'.pkl'))
 
 

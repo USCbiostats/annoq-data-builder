@@ -73,4 +73,5 @@ if __name__ == "__main__":
     main()
 
 
-#python3 -m wgsa_add.add_annotations -f ./resources/test_wgsa_add/input/chr2.vcf -p resources/panther -e ./../annoq-data/enhancer/enhancer_map/ > resources/test_wgsa_add/output/chr2.vcf
+# python3 -m wgsa_add.add_annotations -f ./resources/test_wgsa_add/input/chr2.vcf -p resources/panther -e ./../annoq-data/enhancer/enhancer_map/ > resources/test_wgsa_add/output/chr2.vcf
+# python3 -m wgsa_add.add_annotations -f ./wgsa_add/input/test_vcfs/chr22.vcf -p ../annoq_data/output -e ../annoq_data/output/enhancer_map > ./wgsa_add/output/test_vcfs/chr2

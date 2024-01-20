@@ -59,3 +59,6 @@ for FP in $(ls "$IN_DIR" | grep .vcf$); do
        sbatch "$SLURM_DIR/slurm_${FP}.slurm"
     fi
 done
+
+
+# bash wgsa_add/scripts/run_jobs.sh --work-name test_vcfs --base-dir . --annoq-data-dir ../annoq_data/ --local

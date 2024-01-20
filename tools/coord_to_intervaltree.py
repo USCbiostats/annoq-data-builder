@@ -6,14 +6,15 @@ from typing import List
 from intervaltree import IntervalTree, Interval
 from collections import defaultdict
 
+VALID_FORMATS = ['tree', 'coords']
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-p', '--pep_fasta')
 parser.add_argument('-i', '--idmapping')
 parser.add_argument('-o', '--out_json')
 
-parser.add_argument('-j', '--json', action='store_const',
-                    const=True, help="Output intervals as list using as_json()")
+parser.add_argument('-f', '--format', choices=VALID_FORMATS, default=VALID_FORMATS[0] )
 
 # python3 tools/coord_to_intervaltree.py -p Homo_sapiens.GRCh38.pep.all.fa -i UP000005640_9606.idmapping > parsed_coords.tsv
 
@@ -113,8 +114,8 @@ def foo(args):
         for l in ff.readlines():
             if l.startswith(">"):
                 pthr_interval = PantherInterval.parse_header(l)
-                # if pthr_interval.hgnc_id:
-                itree.add_interval(pthr_interval)
+                if pthr_interval.hgnc_id:
+                    itree.add_interval(pthr_interval)
 
     return itree
 
@@ -126,18 +127,20 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     itree = foo(args)
-
-    if args.json:
-        interval_jsons = [i.as_json() for i in itree]
-    else:
-        [print(i) for i in itree]
-
-    def nested_dict(): return defaultdict(nested_dict)
-    annoq_tree = nested_dict()
-    for i in itree:
-        add_flanking_region(i, annoq_tree)
-
-    write_to_json(annoq_tree,  args.out_json.replace(".pkl", ".json"), indent=2)
-    write_to_pickle(annoq_tree, args.out_json)
+      
     
-    write_to_json(interval_jsons, args.out_json.replace(".pkl", "coords.json"), indent=2) 
+    if args.format == 'coords':
+        interval_jsons = [i.as_json() for i in itree]   
+        write_to_json(interval_jsons, args.out_json, indent=2) 
+    elif args.format == 'tree':
+        print("Building annoq_tree...")
+        def nested_dict(): return defaultdict(nested_dict)
+        annoq_tree = nested_dict()
+        
+        for i in itree:
+            add_flanking_region(i, annoq_tree)
+   
+        write_to_pickle(annoq_tree, args.out_json)      
+        
+        # For Display Purposes Only
+        write_to_json(annoq_tree,  args.out_json.replace(".pkl", ".json"), indent=2)

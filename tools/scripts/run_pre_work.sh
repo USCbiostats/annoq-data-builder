@@ -27,7 +27,7 @@ mkdir -p "$OUTPUT_DIR"
 
 # Define input files
 PANTHER_DATA="$INPUT_DIR/panther_data.json"
-HOMO_SAPIENS_FA="$INPUT_DIR/Homo_sapiens.GRCh38.pep.all.fa"
+HOMO_SAPIENS_FA="$INPUT_DIR/Homo_sapiens.GRCh37.pep.all.fa"
 IDMAPPING_FILE="$INPUT_DIR/UP000005640_9606.idmapping"
 ENHANCER_FILE="$INPUT_DIR/enhancer/CREbedDBenhancers_10092018"
 ENHANCER_RAW_FILE="$INPUT_DIR/enhancer/enh_gene_link_tissue_pval_snp_hg19"
@@ -41,6 +41,7 @@ for file in "$PANTHER_DATA" "$HOMO_SAPIENS_FA" "$IDMAPPING_FILE" "$ENHANCER_FILE
 done
 
 # Define output files
+COORDS_FILE="$OUTPUT_DIR/coords_data.json"
 INTERVAL_TREE_PKL="$OUTPUT_DIR/annoq_tree.pkl"
 PANTHER_TERMS="$OUTPUT_DIR/panther_terms.json"
 PANTHER_DATA_NO_LABELS="$OUTPUT_DIR/panther_data_no_labels.json"
@@ -53,7 +54,8 @@ echo "Running panther_data_cleaner to remove the labels..."
 python3 -m tools.panther_data_cleaner -i "$PANTHER_DATA" -o "$PANTHER_DATA_NO_LABELS"
 
 echo "Running coord_to_intervaltree.py..."
-python3 tools/coord_to_intervaltree.py -p "$HOMO_SAPIENS_FA" -i "$IDMAPPING_FILE" --json -o "$INTERVAL_TREE_PKL"
+python3 tools/coord_to_intervaltree.py -p "$HOMO_SAPIENS_FA" -i "$IDMAPPING_FILE" -o "$INTERVAL_TREE_PKL" -f tree
+python3 tools/coord_to_intervaltree.py -p "$HOMO_SAPIENS_FA" -i "$IDMAPPING_FILE" -o "$COORDS_FILE" -f coords
 
 echo "Running data2json_converter.py..."
 python3 tools/data2json_converter.py --enhancer_file "$ENHANCER_FILE" --raw-file "$ENHANCER_RAW_FILE" --panther_file "$PANTHER_DATA_NO_LABELS" -o "$ENHANCER_MAP_DIR" --parse-col
