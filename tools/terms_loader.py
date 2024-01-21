@@ -38,7 +38,7 @@ def generate_terms_lookup(panther_data):
 
 
 def verify_terms_labels(terms, panther_data):
-    cols = panther_data['cols'][1:]
+    cols = panther_data['cols']
     data = panther_data['data']
     visited_terms = set()
 
@@ -63,7 +63,7 @@ def verify_terms_labels(terms, panther_data):
 
 
 def verify_terms_present(terms, panther_data):
-    cols = panther_data['cols'][1:]
+    cols = panther_data['cols']
     data = panther_data['data']
     visited_terms = set()
 

@@ -33,7 +33,7 @@ ensg_to_hgnc_table = load_hgnc_ensg_to_hgnc_table()
 
 def combine_record(r_list, seq='|'):
     first = r_list[0][:]
-    for i in r_list[1:]:
+    for i in r_list:
         for idx in range(len(first)):
             first[idx] += seq + i[idx]
     return first

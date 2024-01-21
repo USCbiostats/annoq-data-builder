@@ -98,10 +98,10 @@ def add_annotation_header(row, panther_data, tool_idxs={}):
     col_names = row.split("\t")
     add_cols = []
     for ext in EXTS:
-        add_cols += ['flanking_' + str(int(ext)) + '_' + i for i in panther_data['cols'][1:]]
+        add_cols += ['flanking_' + str(int(ext)) + '_' + i for i in panther_data['cols']]
     for tool_type in ANNO_TOOLS_COLS:
         add_cols += [get_tools_prefix(tool_type) +
-                     i for i in panther_data['cols'][1:]]
+                     i for i in panther_data['cols']]
         tool_idxs[tool_type] = col_names.index(tool_type)
 
     return add_cols
@@ -138,7 +138,7 @@ def add_annotations(filepath, annoq_tree, panther_data, gene_coords):
                 
                 
 def combine_panther_record(ids, panther_data, sep='|'):
-    panther_record_length = len(panther_data['cols']) - 1
+    panther_record_length = len(panther_data['cols']) 
     ids = [i for i in ids if i in panther_data['data']]
     if not ids:
         return ['.' for i in range(panther_record_length)]

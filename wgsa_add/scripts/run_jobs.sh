@@ -2,11 +2,11 @@
 
 # Function to display usage information
 show_usage() {
-    echo "Usage: $0 --work-name <WORK_NAME> --base-dir <BASE_DIR> --annoq-data-dir <ANNOQ_DATA_DIR> [--local]"
+    echo "Usage: $0 --work_name <WORK_NAME> --base_dir <BASE_DIR> --annoq_data_dir <ANNOQ_DATA_DIR> [--local]"
     echo "Arguments:"
-    echo "    --work-name: Name of the work to process."
-    echo "    --base-dir: Base directory for processing."
-    echo "    --annoq-data-dir: Annotation data file path."
+    echo "    --work_name: Name of the work to process."
+    echo "    --base_dir: Base directory for processing."
+    echo "    --annoq_data_dir: Annotation data file path."
     echo "    --local: Optional. Run locally using bash instead of sbatch."
 }
 
@@ -14,9 +14,9 @@ show_usage() {
 LOCAL_RUN=false
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --work-name) WORK_NAME="$2"; shift ;;
-        --base-dir) BASE_DIR="$2"; shift ;;
-        --annoq-data-dir) ANNOQ_DATA_DIR="$2"; shift ;;
+        --work_name) WORK_NAME="$2"; shift ;;
+        --base_dir) BASE_DIR="$2"; shift ;;
+        --annoq_data_dir) ANNOQ_DATA_DIR="$2"; shift ;;
         --local) LOCAL_RUN=true ;;
         *) echo "Unknown parameter passed: $1"; show_usage; exit 1 ;;
     esac
@@ -25,7 +25,7 @@ done
 
 # Check if all required arguments are provided
 if [ -z "$WORK_NAME" ] || [ -z "$BASE_DIR" ] || [ -z "$ANNOQ_DATA_DIR" ]; then
-    echo "Error: --work-name, --base-dir, and --annoq-data-dir arguments are required."
+    echo "Error: --work_name, --base_dir, and --annoq_data_dir arguments are required."
     show_usage
     exit 1
 fi
@@ -45,6 +45,21 @@ for dir in "$IN_DIR" "$ANNOQ_DATA_DIR" "$SBATCH_TEMPLATE"; do
     fi
 done
 
+# Check if output and slurm directories exist and ask for confirmation before removing them
+if [ -d "$OUT_DIR" ] || [ -d "$SLURM_DIR" ]; then
+    echo "About to remove the following directories:"
+    [ -d "$OUT_DIR" ] && echo "Output Directory: $OUT_DIR"
+    [ -d "$SLURM_DIR" ] && echo "Slurm Directory: $SLURM_DIR"
+    read -p "Are you sure you want to proceed? (yes/no) " CONFIRMATION
+    if [ "$CONFIRMATION" != "yes" ]; then
+        echo "Operation cancelled by the user."
+        exit 1
+    fi
+
+    # Cleanup the output and slurm directories
+    rm -rf $OUT_DIR $SLURM_DIR
+fi
+
 mkdir -p "$SLURM_DIR"
 mkdir -p "$OUT_DIR"
 
@@ -60,5 +75,8 @@ for FP in $(ls "$IN_DIR" | grep .vcf$); do
     fi
 done
 
+# Local
+# bash wgsa_add/scripts/run_jobs.sh --work_name test_vcfs --base_dir . --annoq_data_dir ../annoq_data/ --local
 
-# bash wgsa_add/scripts/run_jobs.sh --work-name test_vcfs --base-dir . --annoq-data-dir ../annoq_data/ --local
+# On HPC
+#bash wgsa_add/scripts/run_jobs.sh --work_name HRC_03_07_19 --base_dir . --annoq_data_dir ../annoq_data/
