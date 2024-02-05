@@ -1,31 +1,22 @@
 import csv
-from os import path as ospath
 import json
 import argparse
 from sys import path
 from base import load_json
-import pprint
 
 
 def main():
     parser = parse_arguments()
 
-    panther_file = parser.panther_file
-    out_terms_file = parser.out_terms_file
-    panther_data = load_json(panther_file)
-
-    #verify_terms_labels(terms, panther_data)
-    #verify_terms_present(terms, panther_data)
-
+    panther_fp = parser.panther_fp
+    terms_fp = parser.terms_fp
+    panther_data = load_json(panther_fp)
     lookup = generate_terms_lookup(panther_data)
-    lines = lookup.keys()
-
-    with open(out_terms_file, "w") as f:
-        f.writelines("%s\n" % l for l in lines if l.startswith('GO'))
+    
+    write_to_json(lookup, terms_fp)
 
 
 def generate_terms_lookup(panther_data):
-    cols = panther_data['cols'][1:]
     data = panther_data['data']
     visited_terms = set()
     lookup = dict()
@@ -47,7 +38,7 @@ def generate_terms_lookup(panther_data):
 
 
 def verify_terms_labels(terms, panther_data):
-    cols = panther_data['cols'][1:]
+    cols = panther_data['cols']
     data = panther_data['data']
     visited_terms = set()
 
@@ -72,7 +63,7 @@ def verify_terms_labels(terms, panther_data):
 
 
 def verify_terms_present(terms, panther_data):
-    cols = panther_data['cols'][1:]
+    cols = panther_data['cols']
     data = panther_data['data']
     visited_terms = set()
 
@@ -101,22 +92,20 @@ def parse_arguments():
     Returns:
         [dict]: parsed arguments
     """
-    parser = argparse.ArgumentParser(description='Loads genes, families aggs',
+    parser = argparse.ArgumentParser(description='Makes terms maps',
                                      epilog='It worked!')
-    parser.add_argument('--terms', dest='terms_filepath',
-                        required=True, help='Term Ids and labels file')
-    parser.add_argument('--panther_file', dest='panther_file',
+    parser.add_argument('-i', dest='panther_fp',
                         required=True, help='Panther File')
-    parser.add_argument('--out_terms_file', dest='out_terms_file')
+    parser.add_argument('-o', dest='terms_fp')
 
     return parser.parse_args()
 
 
-def load_terms(terms_file: path):
+def load_terms(terms_fp: path):
     """Loads the terms from a tsv file and makes a map with key of term id 
 
     Args:
-        terms_file (path): file path to the tsv term file
+        terms_fp (path): file path to the tsv term file
 
     Returns:
         dict: the term map {id: {id, label}} dictionary
@@ -124,7 +113,7 @@ def load_terms(terms_file: path):
 
     terms = {}
 
-    with open(terms_file, encoding='utf-8') as tsvf:
+    with open(terms_fp, encoding='utf-8') as tsvf:
         csvReader = csv.DictReader(tsvf, delimiter="\t")
 
         for rows in csvReader:
@@ -153,15 +142,13 @@ def get_term(terms, term_id):
     term = terms.get(term_id)
 
     if term == None:
-        #raise ValueError(f"{term_id} not found")
-        # print(term_id)
         pass
     return term
 
 
-def write_to_json(json_data, output_file):
+def write_to_json(json_data, output_file, indent=None):
     with open(output_file, 'w', encoding='utf-8') as outfile:
-        json.dump(json_data, outfile,  ensure_ascii=False, indent=4)
+        json.dump(json_data, outfile,  ensure_ascii=False, indent=indent)
 
 
 if __name__ == "__main__":

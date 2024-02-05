@@ -20,7 +20,7 @@ def main():
     vcf_path = parser.vcf_path
 
     annoq_tree = load_pickle(ospath.join(panther_dir, 'annoq_tree.pkl'))
-    panther_data = load_json(ospath.join(panther_dir, 'panther_data.json'))
+    panther_data = load_json(ospath.join(panther_dir, 'panther_data_no_labels.json'))
     coord_data = load_json(ospath.join(panther_dir, 'coords_data.json'))
 
     annotation_file = ospath.splitext(ospath.basename(vcf_path))[0]
@@ -73,4 +73,5 @@ if __name__ == "__main__":
     main()
 
 
-#python3 -m wgsa_add.add_annotations -f ./resources/test_wgsa_add/input/chr2.vcf -p resources/panther -e ./../annoq-data/enhancer/enhancer_map/ > resources/test_wgsa_add/output/chr2.vcf
+# python3 -m wgsa_add.add_annotations -f ./resources/test_wgsa_add/input/chr2.vcf -p resources/panther -e ./../annoq-data/enhancer/enhancer_map/ > resources/test_wgsa_add/output/chr2.vcf
+# python3 -m wgsa_add.add_annotations -f ./wgsa_add/input/test_vcfs/chr22.vcf -p ../annoq_data/output -e ../annoq_data/output/enhancer_map > ./wgsa_add/output/test_vcfs/chr2
