@@ -254,8 +254,8 @@ JSON:
 1.  Update file annoq-site/metadata/annotation_tree.csv to reflect any metadata changes
 
 2.  Setup environment as follows:
-python3 -m venv env
- . env/bin/activate
+python3 -m venv env\
+ . env/bin/activate\
 pip3 install -r requirements.txt
 
 #### Part 3.1 Generate json and mappings files and copy over
