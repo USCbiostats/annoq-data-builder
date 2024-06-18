@@ -86,7 +86,7 @@ SLURM scripts can be found in the slurm directory (see scripts/sbatch.temp).
 
 
 ## Part 2: AnnoQ Adding PANTHER and ENHANCER annotations
-
+The Java Module in /java_wgsa_add can be used to add the PANTHER and Enhancer annotations
 
 ### Part 2.1 Pre-Work Script for Annotation Preparation
 
@@ -249,3 +249,24 @@ JSON:
     ],
 ]
 ```
+
+## Part 3: Generate files to be used by annoq-database, annoq-api and annoq-site
+1.  Update file annoq-site/metadata/annotation_tree.csv to reflect any metadata changes
+
+2.  Setup environment as follows:
+python3 -m venv env
+ . env/bin/activate
+pip3 install -r requirements.txt
+
+#### Part 3.1 Generate json and mappings files and copy over
+python3 -m tools.annotation_tree_gen --input_csv /path/to/annoq-site/metadata/annotation_tree.csv --output_csv /do/not/use/annotation_tree_output.csv --output_json /path/to/annoq-api/data/anno_tree.json --mappings_json /home/muruganu/projects/temp/annoq-site/metadata/annoq_mappings.json
+1.  Copy anno_tree.json into /annoq-api/data/anno_tree.json
+2.  Copy annoq_mappings.json and into annoq-site/metadata/annoq_mappings.json
+
+DO NOT overwrite file annoq-site/metadata/annotation_tree.csv with /do/not/use/annotation_tree_output.csv since some fields may get lost
+
+python3 /path/to/annoq-data-builder/tools/mappings_data_type_gen.py --input /path/to/annoq-site/metadata/annotation_tree.csv --output /annoq-database/data/doc_type.pkl --anno_tree /home/muruganu/projects/temp/annoq-site/metadata/anno_tree.json -d ,
+
+copy doc_type.pkl into /annoq-database/data/doc_type.pkl
+
+
