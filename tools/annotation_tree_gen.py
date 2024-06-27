@@ -26,6 +26,8 @@ class AnnoqTreeProcessor:
     def _value_type(self, name):
         if '_list_id' in name:
             return 'term_id'
+        if name and name == 'enhancer_linked_genes':
+            return 'panther_long_gene_id'
         return None
 
     def generate_graph(self):
