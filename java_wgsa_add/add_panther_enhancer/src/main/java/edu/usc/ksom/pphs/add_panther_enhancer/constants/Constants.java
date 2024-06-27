@@ -22,6 +22,8 @@
 
 package edu.usc.ksom.pphs.add_panther_enhancer.constants;
 
+import java.util.HashMap;
+
 
 public class Constants {
 
@@ -33,10 +35,20 @@ public class Constants {
     public static final String STR_COMMA = ",";    
     public static final int[] FLANKING_REGIONS = new int[]{0, 10000, 20000};
     
-   public static enum AnnotationTool {ANNOVAR, SNEFF, VEP};    
+    public static enum AnnotationTool {ANNOVAR, SNEFF, VEP};    
     
-    
-    public static final String[] EXPECTED_PANTHER_ANNOT_LABELS = new String[]{"GO_molecular_function_complete_list_id",
+    // Note EXPECTED_PANTHER_ANNOT_LABEL and EXPECTED_PANTHER_ANNOT_LABEL_ID are ordered 
+    public static final String[] EXPECTED_PANTHER_ANNOT_LABEL = new String[]{"GO_molecular_function_complete_list",
+                                                                    "GO_biological_process_complete_list",
+                                                                    "GO_cellular_component_complete_list",
+                                                                    "PANTHER_GO_SLIM_molecular_function_list",
+                                                                    "PANTHER_GO_SLIM_biological_process_list",
+                                                                    "PANTHER_GO_SLIM_cellular_component_list",
+                                                                    "PANTHER_protein_class_list",
+                                                                    "REACTOME_pathway_list",
+                                                                    "PANTHER_pathway_list"};   
+   
+    public static final String[] EXPECTED_PANTHER_ANNOT_LABEL_ID = new String[]{"GO_molecular_function_complete_list_id",
                                                                     "GO_biological_process_complete_list_id",
                                                                     "GO_cellular_component_complete_list_id",
                                                                     "PANTHER_GO_SLIM_molecular_function_list_id",
@@ -45,6 +57,8 @@ public class Constants {
                                                                     "PANTHER_protein_class_list_id",
                                                                     "REACTOME_pathway_list_id",
                                                                     "PANTHER_pathway_list_id"};
+    
+    public static final HashMap<String, String> EXPECTED_PANTHER_ANNOT_ID_TO_LABEL_LOOKUP = initPantherAnnotLookupTypes();
     
     public static final String COL_ANNOVAR_ENSEMBL_GENE_ID = "ANNOVAR_ensembl_Gene_ID";
     public static final String COL_ANNOVAR_REFSEQ_GENE_ID = "ANNOVAR_refseq_Gene_ID";
@@ -100,10 +114,17 @@ public class Constants {
     
     public static final String STR_PIPE = "|";
     public static final String DELIM_PANTHER_ID_PARTS = "\\|";
+    public static final String DELIM_PANTHER_VALUE_PARTS = "\\|";
     public static final String VCF_PLACEHOLDER_EMPTY = ".";
     public static final String VCF_NONE_ENTRY = "NONE:NONE(dist=NONE)";
     public static final String VCF_DELIM_ALTERNATE = ",";    
 
-    
+    public static HashMap <String, String> initPantherAnnotLookupTypes() {
+        HashMap<String, String> lookup = new HashMap<String, String>();
+        for (int i = 0; i < EXPECTED_PANTHER_ANNOT_LABEL_ID.length; i++) {
+            lookup.put(EXPECTED_PANTHER_ANNOT_LABEL_ID[i], EXPECTED_PANTHER_ANNOT_LABEL[i]);
+        }
+        return lookup;
+    }
   
 }

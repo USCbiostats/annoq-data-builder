@@ -33,13 +33,19 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import javax.json.Json;
 import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import javax.json.JsonString;
 import javax.json.JsonValue;
 
 
@@ -55,11 +61,8 @@ public class IdMappingManager {
     public static final String FILE_ENSEMBL_TO_UNIPROT = ResourceManager.PATH_WORKING + FILE_SEPARATOR + "ensembl_to_uniprot_lookup.txt";
     public static final String FILE_SYMBOL_TO_ENSEMBL = ResourceManager.PATH_WORKING + FILE_SEPARATOR + "symbol_to_ensembl_lookup.txt";   
     public static final String FILE_ENTREZ_TO_ENSEMBL = ResourceManager.PATH_WORKING + FILE_SEPARATOR + "entrez_to_ensembl_lookup.txt";
-    
-
+    public static final String FILE_PANTHER_JSON_ANNOT_ID_LABEL = ResourceManager.PATH_WORKING + FILE_SEPARATOR + "panther_terms.json";    
   
-
-    
     
     
     public static final String ENCODING = "UTF-8";
@@ -75,10 +78,13 @@ public class IdMappingManager {
     
     private static IdMappingManager instance;
     
-    // Note PANTHER annotation labels are ordered.  The ordering of value labels in pantherIdToAnnotLookup corresponds to ordering in pantherAnnotLabels
-    private static List<String> pantherAnnotLabels;
+    // Note PANTHER annotation label ids are ordered.  The ordering of value labels in pantherIdToAnnotLookup corresponds to ordering in pantherAnnotLabelIds
+    private static List<String> pantherAnnotLabelIds;
     private static HashMap<String, ArrayList<String>> pantherIdToAnnotLookup;
     public static int numPantherAnnotLabels;
+    
+    // The purpose of this datastructure is for generting the label id to label lookup json file.
+    private static HashMap<String, HashMap<String, String>> pantherAnnotTypeToIdValueLookup;
     
     private static HashMap<String, String> uniprotToPantherId;
     private static String JSON_FIELD_COLS = "cols";
@@ -114,6 +120,8 @@ public class IdMappingManager {
     private static final Set<String> MAPPED_TYPE_SET = new HashSet<String>(Arrays.asList(LABEL_ENSEMBL, LABEL_GENE_NAME, LABEL_REF_SEQ, LABEL_GENE_ORF_NAME));
     
     public static final String DOT = ".";
+    public static final String LABEL_ID = "id";
+    public static final String LABEL_LABEL = "label";
     
 
     private IdMappingManager() {
@@ -164,6 +172,9 @@ public class IdMappingManager {
         if (null == pantherJson) {
             return false;
         }
+        
+        HashMap<String, HashMap<String, String>> pantherAnnotLookup = new HashMap<String, HashMap<String, String>>();
+                
         JsonValue.ValueType vt = pantherJson.getValueType();
         if (JsonValue.ValueType.OBJECT == vt) {
             JsonObject pantherObj = (JsonObject) pantherJson;
@@ -171,14 +182,13 @@ public class IdMappingManager {
             if (null == pantherColLabels) {
                 return false;
             }
-            if (null == pantherColLabels) {
-                return false;
-            }
             ArrayList<String> colList = new ArrayList<String>(pantherColLabels.size());
             ArrayList<Boolean> includeColData = new ArrayList<Boolean>();
+            HashMap<String, Integer> colsToIndex = new HashMap<String, Integer>();            
             for (int i = 0; i < pantherColLabels.size(); i++) {
                 String label = pantherColLabels.getString(i);
-                if (Utils.getIndex(Constants.EXPECTED_PANTHER_ANNOT_LABELS, label) < 0) {
+                colsToIndex.put(label, i);                
+                if (Utils.getIndex(Constants.EXPECTED_PANTHER_ANNOT_LABEL_ID, label) < 0) {
                     includeColData.add(Boolean.FALSE);
                 }
                 else {
@@ -186,6 +196,17 @@ public class IdMappingManager {
                     colList.add(label);                    
                 }
             }
+            
+            // Need to generate annotation label id to value lookup
+            HashMap<Integer, Integer> colLabelIdIndexToLabelValueIndex = new HashMap<Integer, Integer>();
+            for (Entry<String, String> idToLabelEntry: Constants.EXPECTED_PANTHER_ANNOT_ID_TO_LABEL_LOOKUP.entrySet()) {
+                String labelIdType = idToLabelEntry.getKey();
+                Integer keyIndex = colsToIndex.get(labelIdType);
+                Integer valueIndex = colsToIndex.get(idToLabelEntry.getValue());
+                colLabelIdIndexToLabelValueIndex.put(keyIndex, valueIndex);
+                pantherAnnotLookup.put(labelIdType, new HashMap<String, String>());
+            }
+            
             JsonObject annotListLookup = pantherObj.getJsonObject(JSON_FIELD_DATA);
             HashMap<String, String> uniprotIdLookup = new HashMap<String, String>();
             Set<String> idSet = annotListLookup.keySet();
@@ -208,6 +229,31 @@ public class IdMappingManager {
                     }
                     mappedAnnots.add(annotList.getString(i));
                 }
+                
+                // Generate label to value lookup
+                for (Entry<String,HashMap<String, String>> annotTypeToIdValue: pantherAnnotLookup.entrySet()) {
+                    String annotType = annotTypeToIdValue.getKey();
+                    HashMap<String, String> lookups = annotTypeToIdValue.getValue();
+                    Integer idIndex = colsToIndex.get(annotType);
+                    Integer valueIndex = colLabelIdIndexToLabelValueIndex.get(idIndex);
+                    String idListStr = annotList.getString(idIndex);
+                    String valueListStr = annotList.getString(valueIndex);
+                    if (idListStr.isEmpty() && valueListStr.isEmpty()) {
+                        continue;
+                    }
+                    String idListParts[] = idListStr.split(Constants.DELIM_PANTHER_ID_PARTS);
+                    String valueListParts[] = valueListStr.split(Constants.DELIM_PANTHER_VALUE_PARTS);
+                    if (idListParts.length != valueListParts.length) {
+                        System.out.println("Panther id " + id + " for annotation type " + annotType + " has " + idListParts.length + " id labels and " + valueListParts + " label values.");
+                        return false;
+                    }
+                    for (int i = 0; i < idListParts.length; i++) {
+                        if (false == lookups.containsKey(idListParts[i])) {
+                            lookups.put(idListParts[i], valueListParts[i]);
+                        }
+                    }
+                }
+                
                 pantherIdLookup.put(id, mappedAnnots);
                 String[] pantherParts = id.split(Constants.DELIM_PANTHER_ID_PARTS);
                 if (NUM_PANTHER_ID_PARTS == pantherParts.length) {
@@ -219,7 +265,7 @@ public class IdMappingManager {
                 }
                 
             }
-            for (String expected: Constants.EXPECTED_PANTHER_ANNOT_LABELS) {
+            for (String expected: Constants.EXPECTED_PANTHER_ANNOT_LABEL_ID) {
                 if (colList.contains(expected)) {
                     continue;
                 }
@@ -228,11 +274,12 @@ public class IdMappingManager {
                     return false;
                 }
             }
-            pantherAnnotLabels = colList;
-            numPantherAnnotLabels = pantherAnnotLabels.size();            
+            pantherAnnotLabelIds = colList;
+            numPantherAnnotLabels = pantherAnnotLabelIds.size();            
             pantherIdToAnnotLookup = pantherIdLookup;
             uniprotToPantherId = uniprotIdLookup;
-            
+            pantherAnnotTypeToIdValueLookup = pantherAnnotLookup;
+            outputAnnotIdLabelLookup(pantherAnnotTypeToIdValueLookup, FILE_PANTHER_JSON_ANNOT_ID_LABEL);
         }
 
         return true;
@@ -445,8 +492,8 @@ public class IdMappingManager {
         return pantherIdToAnnotLookup.get(pantherId);        
     }
     
-    public List<String> getPantherAnnotLabels() {
-        return pantherAnnotLabels;
+    public List<String> getPantherAnnotLabelIds() {
+        return pantherAnnotLabelIds;
     }
     
     public ArrayList<String> getPantherIdsForEnhancer(String enhancerId) {
@@ -478,8 +525,9 @@ public class IdMappingManager {
                 return false;
             }
             Path outFile = Paths.get(fileName);
+            StringBuffer sb = new StringBuffer();
             for (Entry<String, ArrayList<String>> entry : lookup.entrySet()) {
-                StringBuffer sb = new StringBuffer();
+                sb.setLength(0);
                 sb.append(entry.getKey());
                 sb.append(FILE_LOOKUP_SEPARATOR);
                 sb.append(String.join(LOOKUP_VALUE_SEPARATOR, entry.getValue()));
@@ -492,6 +540,41 @@ public class IdMappingManager {
             e.printStackTrace();
         }
         return false;
+    }
+    
+    
+    public static boolean outputAnnotIdLabelLookup(HashMap<String, HashMap<String, String>> lookup, String fileName) {
+        try {
+            if (null == lookup || null == fileName) {
+                return false;
+            }
+            
+            JsonObjectBuilder annotListTypes = Json.createObjectBuilder();
+            Collection<HashMap<String, String>> annotTypeCol = lookup.values();
+            Iterator<HashMap<String, String>> iter = annotTypeCol.iterator();
+            while (iter.hasNext()) {
+                HashMap<String, String> idToValueLookup = iter.next();
+                for (Entry<String, String> idValue : idToValueLookup.entrySet()) {
+//                    JsonObjectBuilder job = Json.createObjectBuilder();
+                    JsonObjectBuilder idLabel = Json.createObjectBuilder();
+                    idLabel.add(LABEL_ID, Json.createValue(idValue.getKey()));
+                    idLabel.add(LABEL_LABEL, Json.createValue(idValue.getValue()));
+//                    job.add(idValue.getKey(), idLabel.build());
+                    annotListTypes.add(idValue.getKey(), idLabel.build());
+                }
+            }
+
+            boolean fileCreated = Utils.createFile(fileName);
+            if (false == fileCreated) {
+                return false;
+            }
+            Path outFile = Paths.get(fileName);
+            Files.write(outFile, annotListTypes.build().toString().getBytes(), StandardOpenOption.APPEND);
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;       
     }
     
 

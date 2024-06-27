@@ -41,4 +41,5 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
     </properties>
+    <name>github_add_panther_enhancer</name>
 </project>

@@ -74,19 +74,19 @@ public class Snp {
         ArrayList<String> addedCols = new ArrayList<String>();
         for (int i = 0; i < Constants.FLANKING_REGIONS.length; i++) {
             String prefix = Constants.PREFIX_COL_FLANKING + Constants.FLANKING_REGIONS[i] + Constants.MID_COL_FLANKING;
-            for (int j = 0; j < Constants.EXPECTED_PANTHER_ANNOT_LABELS.length; j++) {
-                addedCols.add(prefix + Constants.EXPECTED_PANTHER_ANNOT_LABELS[j]);
+            for (int j = 0; j < Constants.EXPECTED_PANTHER_ANNOT_LABEL_ID.length; j++) {
+                addedCols.add(prefix + Constants.EXPECTED_PANTHER_ANNOT_LABEL_ID[j]);
             }
         }
         for (int i = 0; i < Constants.ANNOT_COL_SET.length; i++) {
-            for (int j = 0; j < Constants.EXPECTED_PANTHER_ANNOT_LABELS.length; j++) {
-                addedCols.add(Constants.PREFIX_LABEL_ADD_ANNOT_SET[i] + Constants.EXPECTED_PANTHER_ANNOT_LABELS[j]);
+            for (int j = 0; j < Constants.EXPECTED_PANTHER_ANNOT_LABEL_ID.length; j++) {
+                addedCols.add(Constants.PREFIX_LABEL_ADD_ANNOT_SET[i] + Constants.EXPECTED_PANTHER_ANNOT_LABEL_ID[j]);
             }
         }
         
         
-        for (int j = 0; j < Constants.EXPECTED_PANTHER_ANNOT_LABELS.length; j++) {
-            addedCols.add(Constants.PREFIX_LABEL_PEREGRINE_ENHANCER_LINKED + Constants.EXPECTED_PANTHER_ANNOT_LABELS[j]);
+        for (int j = 0; j < Constants.EXPECTED_PANTHER_ANNOT_LABEL_ID.length; j++) {
+            addedCols.add(Constants.PREFIX_LABEL_PEREGRINE_ENHANCER_LINKED + Constants.EXPECTED_PANTHER_ANNOT_LABEL_ID[j]);
         }
         
         addedCols.add(Constants.LABEL_PEREGRINE_ENHANCER_LINKED_ASSAY);
@@ -297,7 +297,7 @@ public class Snp {
         ArrayList<String> valuesList = new ArrayList<String>(COLS_TO_BE_ADDED.length);
         for (int i = 0; i < Constants.FLANKING_REGIONS.length; i++) {
             ArrayList<String> curFlankingRegionAnnots = flankingToAnnotationLookup.get(Constants.FLANKING_REGIONS[i]);
-            for (int j = 0; j < Constants.EXPECTED_PANTHER_ANNOT_LABELS.length; j++) {
+            for (int j = 0; j < Constants.EXPECTED_PANTHER_ANNOT_LABEL_ID.length; j++) {
                 valuesList.add(curFlankingRegionAnnots.get(j));
             }
         }
@@ -479,21 +479,21 @@ public class Snp {
         if (null == annots) {
             return Constants.STR_EMPTY;
         }
-        if (annots.size() != Constants.EXPECTED_PANTHER_ANNOT_LABELS.length) {
+        if (annots.size() != Constants.EXPECTED_PANTHER_ANNOT_LABEL_ID.length) {
             return Constants.STR_EMPTY;
         }
         StringBuffer sb = new StringBuffer();
-        for (int i = 0; i < Constants.EXPECTED_PANTHER_ANNOT_LABELS.length - 1; i++) {
-            sb.append(Constants.EXPECTED_PANTHER_ANNOT_LABELS[i]);
+        for (int i = 0; i < Constants.EXPECTED_PANTHER_ANNOT_LABEL_ID.length - 1; i++) {
+            sb.append(Constants.EXPECTED_PANTHER_ANNOT_LABEL_ID[i]);
             sb.append(Constants.STR_EQUAL);
             sb.append(annots.get(i));
             sb.append(Constants.STR_COMMA);
         }
 
         // Append the last item without delimiter
-        sb.append(Constants.EXPECTED_PANTHER_ANNOT_LABELS[Constants.EXPECTED_PANTHER_ANNOT_LABELS.length - 1]);
+        sb.append(Constants.EXPECTED_PANTHER_ANNOT_LABEL_ID[Constants.EXPECTED_PANTHER_ANNOT_LABEL_ID.length - 1]);
         sb.append(Constants.STR_EQUAL);
-        sb.append(annots.get(Constants.EXPECTED_PANTHER_ANNOT_LABELS.length - 1));   
+        sb.append(annots.get(Constants.EXPECTED_PANTHER_ANNOT_LABEL_ID.length - 1));   
         
         return sb.toString();
     }
