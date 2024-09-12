@@ -38,6 +38,11 @@ class AnnoqTreeProcessor:
 
     def to_json_data(self):
         return [row.dropna().to_dict() for index, row in self.tree_df.iterrows()]
+    
+    def to_api_mappings_json(self):
+        api_mappings = self._nested_dict()
+        api_mappings.setdefault("results", [row.dropna().to_dict() for index, row in self.tree_df.iterrows()])
+        return api_mappings
 
     def generate_mappings(self):
         mappings = self._nested_dict()
@@ -68,6 +73,7 @@ def parse_arguments():
     parser.add_argument('--output_csv', type=str, help='Output CSV file path')
     parser.add_argument('--output_json', type=str, help='Output JSON file path for table')
     parser.add_argument('--mappings_json', type=str, help='Output JSON file path for mappings')
+    parser.add_argument('--api_mappings_json', type=str, help='Output JSON file path for api mappings')
     return parser.parse_args()
 
 def main():
@@ -87,10 +93,14 @@ def main():
     # Writing Mappings to JSON
     mappings_data = processor.generate_mappings()
     write_to_json(mappings_data, args.mappings_json, indent=2)
+    
+    # Writing API Mappings to JSON
+    api_mappings_data = processor.to_api_mappings_json()
+    write_to_json(api_mappings_data, args.api_mappings_json, indent=2)
 
 
 if __name__ == "__main__":
     main()
 
 
-#python3 -m tools.annotation_tree_gen --input_csv ../annoq_data/input/annotation_tree.csv --output_csv ../annoq_data/output/annotation_tree.csv --output_json ../annoq_data/output/annotation_tree.json --mappings_json ../annoq_data/output/annotation_mappings.json
+#python3 -m tools.annotation_tree_gen --input_csv ../annoq_data/input/annotation_tree.csv --output_csv ../annoq_data/output/annotation_tree.csv --output_json ../annoq_data/output/annotation_tree.json --mappings_json ../annoq_data/output/annotation_mappings.json --api_mappings_json ../annoq_data/output/api_mapping_anno_tree.json
