@@ -259,9 +259,10 @@ python3 -m venv env\
 pip3 install -r requirements.txt
 
 #### Part 3.1 Generate json and mappings files and copy over
-python3 -m tools.annotation_tree_gen --input_csv /path/to/annoq-site/metadata/annotation_tree.csv --output_csv /do/not/use/annotation_tree_output.csv --output_json /path/to/annoq-api/data/anno_tree.json --mappings_json /path/to/annoq-database/metadata/annoq_mappings.json
+python3 -m tools.annotation_tree_gen --input_csv /path/to/annoq-site/metadata/annotation_tree.csv --output_csv /do/not/use/annotation_tree_output.csv --output_json /path/to/annoq-api/data/anno_tree.json --mappings_json /path/to/annoq-database/metadata/annoq_mappings.json --api_mappings_json /path/to/annoq-api-v2/data/api_mapping_anno_tree.json 
 1.  Copy anno_tree.json into /annoq-api/data/anno_tree.json
-2.  Copy annoq_mappings.json and into annoq-database/metadata/annoq_mappings.json
+2.  Copy anno_tree.json into /annoq-api-v2/data/anno_tree.json
+3.  Copy annoq_mappings.json and into annoq-database/metadata/annoq_mappings.json
 
 DO NOT overwrite file annoq-site/metadata/annotation_tree.csv with /do/not/use/annotation_tree_output.csv since some fields may get lost
 
