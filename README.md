@@ -87,6 +87,13 @@ SLURM scripts can be found in the slurm directory (see scripts/sbatch.temp).
 
 ## Part 2: AnnoQ Adding PANTHER and ENHANCER annotations
 The Java Module in /java_wgsa_add can be used to add the PANTHER and Enhancer annotations
+The Java module requires the annotation file generated via PANTHER API.  It can be generated as follows:
+1.    cd  annoq-data-builder
+2.    Setup environment as follows:
+     * python3 -m venv env
+     * . env/bin/activate
+     * pip3 install -r requirements.txt
+3.   python3 tools/api_extractor/panther_gene_extractor.py --output panther_annot.json       
 
 ### Part 2.1 Pre-Work Script for Annotation Preparation
 

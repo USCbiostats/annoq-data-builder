@@ -40,7 +40,7 @@ def format_gene_id(long_gene_id):
     
      
     
-def add_genes_to_lookup(gene_list_json, lookup):
+def add_genes_to_lookup(gene_list_json, lookup, version_lookup):
     if gene_list_json is None:
         exit_with_msg('Unable to process information from ' + json.dumps(gene_list_json, sort_keys=False, indent=4))
     for gene in gene_list_json:
@@ -76,6 +76,11 @@ def add_genes_to_lookup(gene_list_json, lookup):
                         type = types["content"]
                         annotation_list = types["annotation_list"]
                         
+                        release_version = types["release_version"]
+                        if version_lookup.get(type) is None:
+                            version_lookup[type] = set()
+                        version_lookup[type].add(str(release_version))
+                            
                         annotation_id_list = []
                         annotation_label_list = []
                         annotation = annotation_list["annotation"]
@@ -173,10 +178,11 @@ def main():
         
         ## Read data and add to lookup
         gene_lookup = dict()
+        version_lookup = dict()
         
         if jret['search'].get('gene_list', False) and jret['search']['gene_list'].get('gene', False):            
             gene_list_json = jret['search']['gene_list']['gene']
-            add_genes_to_lookup(gene_list_json, gene_lookup)
+            add_genes_to_lookup(gene_list_json, gene_lookup, version_lookup)
 
             cur_index = PANTHER_API_DOWNLOAD_GENOME_DEFAULT_START_INDEX + PANTHER_API_DOWNLOAD_GENOME_MAX_ENTRIES
             while cur_index <= num_genes:
@@ -187,7 +193,7 @@ def main():
                 jret = resp.json()
                 if jret['search'].get('gene_list', False) and jret['search']['gene_list'].get('gene', False):
                     gene_list_json = jret['search']['gene_list']['gene']
-                    add_genes_to_lookup(gene_list_json, gene_lookup)
+                    add_genes_to_lookup(gene_list_json, gene_lookup, version_lookup)
                                 
                 cur_index += PANTHER_API_DOWNLOAD_GENOME_MAX_ENTRIES
             
@@ -195,10 +201,17 @@ def main():
             if num_genes != len(gene_lookup):
                 LOG.warning("Number of genes expected " + str(num_genes) + " unique number found " + str(len(gene_lookup)))
                 sys.stdout.write("Number of genes expected " + str(num_genes) + " unique number found " + str(len(gene_lookup)) + "\n")
+            
+            ## Update set to string
+            version_list = []    
+            for k, v in version_lookup.items():
+                version_list.append(k + "=" + ",".join(str(s) for s in v))
+            
                 
             ## Create final json structure
             param_cols = "cols"
-            param_data = "data"    
+            param_data = "data"
+            param_version = "version"    
             all_data = {param_cols : ["GO_molecular_function_complete_list",
                                     "GO_molecular_function_complete_list_id",
                                     "GO_biological_process_complete_list",
@@ -217,7 +230,8 @@ def main():
                                     "REACTOME_pathway_list_id",
                                     "PANTHER_pathway_list",
                                     "PANTHER_pathway_list_id"],
-                        param_data : gene_lookup}
+                        param_data : gene_lookup,
+                        param_version: version_list}
         
             ## Writeout of json 
             with open(args.output, 'w+') as fhandle:
