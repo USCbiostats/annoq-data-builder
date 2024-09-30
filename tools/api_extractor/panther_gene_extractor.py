@@ -26,7 +26,7 @@ def exit_with_msg(instr):
     sys.exit(1)
                
     
-def format_gene_id(long_gene_id):
+""" def format_gene_id(long_gene_id):
     if long_gene_id is None:
         return None
     parts = long_gene_id.split(PANTHER_LONG_GENE_ID_DELIM)
@@ -36,7 +36,7 @@ def format_gene_id(long_gene_id):
     gene_parts = gene_part.split(PANTHER_LONG_GENE_GENE_DELIM)
     if  len(gene_parts) < PANTHER_LONG_GENE_GENE_ID_NUM_PARTS:
         return None
-    return gene_parts[0] + PANTHER_ID_DELIM + gene_parts[1]
+    return gene_parts[0] + PANTHER_ID_DELIM + gene_parts[1] """
     
      
     
@@ -62,7 +62,7 @@ def add_genes_to_lookup(gene_list_json, lookup, version_lookup):
         REACTOME_pathway_list_id = ""
         PANTHER_pathway_list = ""
         PANTHER_pathway_list_id = ""
-        panther_id = format_gene_id(gene["accession"])
+        panther_id = gene["accession"] #format_gene_id(gene["accession"])
         if panther_id is None:
             exit_with_msg('Unable to process null panther id information from ' + json.dumps(gene, sort_keys=False, indent=4))
  
