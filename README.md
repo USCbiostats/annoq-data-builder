@@ -93,7 +93,8 @@ The Java module requires the annotation file generated via PANTHER API.  It can 
      * python3 -m venv env
      * . env/bin/activate
      * pip3 install -r requirements.txt
-3.   python3 tools/api_extractor/panther_gene_extractor.py --output panther_annot.json       
+3.   python3 tools/api_extractor/panther_gene_extractor.py --output panther_annot.json
+4.   copy panther_annot.json to location specified in ./annoq-data-builder/java_wgsa_add/add_panther_enhancer/src/main/resources/add_panther_enhancer.properties or modify the property to point to location of file
 
 ### Part 2.1 Pre-Work Script for Annotation Preparation
 
