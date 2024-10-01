@@ -117,7 +117,8 @@ public class Constants {
     public static final String DELIM_PANTHER_VALUE_PARTS = "\\|";
     public static final String VCF_PLACEHOLDER_EMPTY = ".";
     public static final String VCF_NONE_ENTRY = "NONE:NONE(dist=NONE)";
-    public static final String VCF_DELIM_ALTERNATE = ",";    
+    public static final String VCF_DELIM_ALTERNATE = ",";
+    public static final String DELIM_ID_PARTS_SEMI_COLON = ";";
 
     public static HashMap <String, String> initPantherAnnotLookupTypes() {
         HashMap<String, String> lookup = new HashMap<String, String>();

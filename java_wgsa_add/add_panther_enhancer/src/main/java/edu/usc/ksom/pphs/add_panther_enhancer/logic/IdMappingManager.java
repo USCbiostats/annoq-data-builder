@@ -42,10 +42,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import javax.json.Json;
 import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
-import javax.json.JsonString;
 import javax.json.JsonValue;
 
 
@@ -58,10 +56,7 @@ public class IdMappingManager {
     public static final String FILE_LOOKUP_SEPARATOR = "\t";
     public static final String LOOKUP_VALUE_SEPARATOR = "|";
     public static final String FILE_SEPARATOR = "/";
-    public static final String FILE_ENSEMBL_TO_UNIPROT = ResourceManager.PATH_WORKING + FILE_SEPARATOR + "ensembl_to_uniprot_lookup.txt";
-    public static final String FILE_SYMBOL_TO_ENSEMBL = ResourceManager.PATH_WORKING + FILE_SEPARATOR + "symbol_to_ensembl_lookup.txt";   
-    public static final String FILE_ENTREZ_TO_ENSEMBL = ResourceManager.PATH_WORKING + FILE_SEPARATOR + "entrez_to_ensembl_lookup.txt";
-    public static final String FILE_PANTHER_JSON_ANNOT_ID_LABEL = ResourceManager.PATH_WORKING + FILE_SEPARATOR + "panther_terms.json";    
+  
   
     
     
@@ -77,6 +72,12 @@ public class IdMappingManager {
     public static final int COL_ASSAY = 3;
     
     private static IdMappingManager instance;
+    private static String workingDir;
+    
+    public static  String file_ensembl_to_uniprot;
+    public static  String file_symbol_to_ensembl;
+    public static  String file_entrez_to_ensembl;
+    public static  String file_panther_json_annot_id_label;     
     
     // Note PANTHER annotation label ids are ordered.  The ordering of value labels in pantherIdToAnnotLookup corresponds to ordering in pantherAnnotLabelIds
     private static List<String> pantherAnnotLabelIds;
@@ -127,11 +128,20 @@ public class IdMappingManager {
     private IdMappingManager() {
         
     }
-    public static synchronized IdMappingManager getInstance(){
+    public static synchronized IdMappingManager getInstance(String workingDir){
         if (null != instance) {
             return instance;
         }
         try {
+            IdMappingManager.workingDir = workingDir;
+
+            IdMappingManager.file_ensembl_to_uniprot = workingDir + FILE_SEPARATOR + "ensembl_to_uniprot_lookup.txt";
+            IdMappingManager.file_symbol_to_ensembl = workingDir + FILE_SEPARATOR + "symbol_to_ensembl_lookup.txt";
+            IdMappingManager.file_entrez_to_ensembl = workingDir + FILE_SEPARATOR + "entrez_to_ensembl_lookup.txt";
+            IdMappingManager.file_panther_json_annot_id_label = workingDir + FILE_SEPARATOR + "panther_terms.json";
+            
+            
+            
             // Read PANTHER id mapping information
             JsonObject pantherJson = IOUtils.parseJSONFile(FILE_PANTHER_ANNOT);
             if (false == initPantherAnnotInfo(pantherJson)) {
@@ -279,7 +289,7 @@ public class IdMappingManager {
             pantherIdToAnnotLookup = pantherIdLookup;
             uniprotToPantherId = uniprotIdLookup;
             pantherAnnotTypeToIdValueLookup = pantherAnnotLookup;
-            outputAnnotIdLabelLookup(pantherAnnotTypeToIdValueLookup, FILE_PANTHER_JSON_ANNOT_ID_LABEL);
+            outputAnnotIdLabelLookup(pantherAnnotTypeToIdValueLookup, IdMappingManager.file_panther_json_annot_id_label);
         }
 
         return true;
@@ -320,8 +330,8 @@ public class IdMappingManager {
 
         entrezToEnsemblLookup = convertValueToArrayList(entrezToEnsembl);
         symbolToEnsemblLookup = convertValueToArrayList(symbolToEnsembl);
-        outputLookupInfoHashMap(entrezToEnsemblLookup, FILE_ENTREZ_TO_ENSEMBL);
-        outputLookupInfoHashMap(symbolToEnsemblLookup, FILE_SYMBOL_TO_ENSEMBL);        
+        outputLookupInfoHashMap(entrezToEnsemblLookup, file_entrez_to_ensembl);
+        outputLookupInfoHashMap(symbolToEnsemblLookup, file_symbol_to_ensembl);        
         return true;
     }
     
@@ -431,7 +441,7 @@ public class IdMappingManager {
         geneOrfNameToUniprotLookup = convertValueToArrayList(geneOrfNameToUniprot);
         refSeqGeneIdToUniprotLookup =  convertValueToArrayList(refSeqGeneIdToUniprot);
 
-        outputLookupInfoHashMap(ensemblToUniprotLookup, FILE_ENSEMBL_TO_UNIPROT);
+        outputLookupInfoHashMap(ensemblToUniprotLookup, file_ensembl_to_uniprot);
         
         return true;
     }
@@ -694,6 +704,6 @@ public class IdMappingManager {
     
     
     public static void main (String args[]) {
-        IdMappingManager im = IdMappingManager.getInstance();
+        IdMappingManager im = IdMappingManager.getInstance("C:/projects/annoq_data_builder_add_panther_enhancer/top_med_vcf/diagnostics");
     }
 }

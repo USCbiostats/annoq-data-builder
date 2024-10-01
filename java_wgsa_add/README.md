@@ -5,7 +5,7 @@
 ## Load modules to build and run application
 module load intel<br>
 module load maven/3.6.3<br>
-module load openjdk/11.0.17_8<br>
+module load jdk<br>
 
 
 
@@ -21,9 +21,6 @@ Update property file /add_panther_enhancer/src/main/resources/add_panther_enhanc
 - file.enhancer.panther=/scratch1/username/java_add_panther_enhancer/load_info/enhancer/enh_gene_link_tissue_pval_snp_hg19
 
 
-- dir.output.working=/scratch1/username/java_add_panther_enhancer/diagnostics
-- dir.input.vcf=/scratch1/username/java_add_panther_enhancer/vcf_input/HRC_03_07_19
-- dir.output.vcf=/scratch1/username/java_add_panther_enhancer/vcf_output/HRC_03_07_19
 
 
 ## Build project
@@ -33,15 +30,21 @@ mvn clean install
 ## Run project
 2 options to run. Either directly or via HPC node
 
-- From directory add_panther_enhancer<br>
-  mvn exec:java -Dexec.args="-Xss64m  -Xms512m -Xmx16g"   -Dexec.mainClass=edu.usc.ksom.pphs.add_panther_enhancer.main.ProcessVCF > output.txt
+- From directory add_panther_enhancer.  Update memory parameters if necessary<br>
+  export MAVEN_OPTS="-Xss64m -Xms512m -Xmx16g"
+  mvn exec:java -Dexec.mainClass=edu.usc.ksom.pphs.add_panther_enhancer.main.ProcessVCF -Dexec.args="/project/projname/run_1/input /project/projname/run_1/output /project/projname/run_1/working"  > output.txt
 
+Or use the following command to execute in parallel(br>
+  mvn exec:java -Dexec.mainClass=edu.usc.ksom.pphs.add_panther_enhancer.main.ProcessVCFParallel -Dexec.args="/project/projname/run_1/input /project/projname/run_1/output /project/projname/run_1/working"  > output.txt
+
+  
 
 - If running in HPC CARC system, login into the correct server, create a sbatch script example run.sbatch  and execute.  Note, the sbatch script has to be created in directory add_panther_enhancer
 
-Contents of script will be similar to following:<br>
+Contents of script will be similar to following for processing 5 chromosomes in parallel:<br>
 #!/bin/bash<br>
-#SBATCH --ntasks=1<br>
+#SBATCH --ntasks=5<br>
+#SBATCH --cpus-per-task=5<br>
 #SBATCH --time=12:00:00<br>
 #SBATCH --account=myaccount_123<br>
 #SBATCH --partition=my_partition<br>
@@ -55,7 +58,11 @@ module load jdk<br>
 module load intel/19.0.4<br>
 module load maven/3.6.3<br>
 
-mvn exec:java -Dexec.args="-Xss64m  -Xms512m -Xmx16g"   -Dexec.mainClass=edu.usc.ksom.pphs.add_panther_enhancer.main.ProcessVCF > output.txt
+export MAVEN_OPTS="-Xss64m -Xms512m -Xmx16g"
+mvn exec:java -Dexec.mainClass=edu.usc.ksom.pphs.add_panther_enhancer.main.ProcessVCF -Dexec.args="/project/projname/run_1/input /project/projname/run_1/output /project/projname/run_1/working"  > output.txt
+
+or execute the following command to run in parallel
+mvn exec:java -Dexec.mainClass=edu.usc.ksom.pphs.add_panther_enhancer.main.ProcessVCFParallel -Dexec.args="/project/projname/run_1/input /project/projname/run_1/output /project/projname/run_1/working"  > output.txt
 
 
 
