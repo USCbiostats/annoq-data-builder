@@ -30,6 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import htsjdk.samtools.util.IntervalTree;
+//import htsjdk.samtools.
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -146,13 +147,25 @@ public class ChrRangeManager {
                     it = new IntervalTree();
                     flankingLookup.put(flankingRegion, it);
                 }
-
-
                 ensembleLookup.put(ensembleKey, ensembleGeneId);
-                Object previous = (String) it.put(Math.max(0, start - flankingRegion), end + flankingRegion, ensembleKey);
-                if (null != previous) {
-                    System.out.println("Chromosome " + chrNum  + " Overwriting previous " + previous + " key position information in flanking region " + flankingRegion + " with  " + ensembleKey);
+                int low = Math.max(0, start - flankingRegion);
+                int high = end + flankingRegion;
+                IntervalTree.Node  existing = it.find(low, high);
+                if (null != existing) {
+                    HashSet<String> existingValSet = (HashSet<String>)existing.getValue();
+                    System.out.println("Chromosome " + chrNum  + " adding to previous " + String.join(",", new ArrayList<String>(existingValSet)) + " key position information in flanking region " + flankingRegion + " with  " + ensembleKey);
+                    existingValSet.add(ensembleKey);
+                    it.put(low, high, existingValSet);                    
+                }    
+                else {
+                    HashSet<String> ensembleSet =  new HashSet<String>();
+                    ensembleSet.add(ensembleKey);
+                    it.put(low, high, ensembleSet);
                 }
+//                
+//                Object previous = (String) it.put(Math.max(0, start - flankingRegion), end + flankingRegion, ensembleKey);
+//                if (null != previous) {
+//                }
             }
             counter++;
 //            
@@ -216,10 +229,22 @@ public class ChrRangeManager {
             String enhancerIdKey = counter + "-" + parts[3];
 
             enhancerIdLookup.put(enhancerIdKey, parts[3]);
-            String previous = (String)it.put(start, end,enhancerIdKey);
-            if (null != previous) {
-                System.out.println("Overwriting previous " + previous + " enhancer information with enhancer information for " + enhancerIdKey);
+            IntervalTree.Node existing = it.find(start, end);
+            if (null != existing) {
+                HashSet<String> existingValSet = (HashSet<String>)existing.getValue();
+                System.out.println("Enhancer adding to previous " + String.join(",", new ArrayList<String>(existingValSet)) + " for range " + start + " to end " + end + " for  " + enhancerIdKey);
+                existingValSet.add(enhancerIdKey);
+                it.put(start, end, existingValSet);
             }
+            else {
+                HashSet<String> enhancerSet = new HashSet<String>();
+                enhancerSet.add(enhancerIdKey);
+                it.put(start, end, enhancerSet);
+            }
+//            String previous = (String)it.put(start, end,enhancerIdKey);
+//            if (null != previous) {
+//                System.out.println("Overwriting previous " + previous + " enhancer information with enhancer information for " + enhancerIdKey);
+//            }
         }
 //        for (String chr: intervalTreeLookup.keySet()) {
 //            System.out.println("Processing Enhancer interval tree for chromosome " + chr);
@@ -243,15 +268,17 @@ public class ChrRangeManager {
         if (null == it) {
             System.out.println("No tree defined for flanking region " + flankingRegion);
         }
-        Iterator<IntervalTree.Node<String>> overlappers = it.overlappers(pos, pos);
+        Iterator<IntervalTree.Node<HashSet<String>>> overlappers = it.overlappers(pos, pos);
         if (null == overlappers) {
             return null;
         }
         HashSet<String> matches = new HashSet<String>();
-        while(overlappers.hasNext()) {
-           IntervalTree.Node<String> item = overlappers.next();
-           String ensembleKey = item.getValue();
-           matches.add(ensemblKeyEnsemblIdLookup.get(ensembleKey));
+        while (overlappers.hasNext()) {
+            IntervalTree.Node<HashSet<String>> item = overlappers.next();
+            HashSet<String> keySet = (HashSet<String>) item.getValue();
+            for (String ensembleKey : keySet) {
+                matches.add(ensemblKeyEnsemblIdLookup.get(ensembleKey));
+            }
         }
         return matches;
     }
@@ -261,16 +288,19 @@ public class ChrRangeManager {
         if (null == it) {
             System.out.println("No tree defined for chromosome " + chromosome);
         }
-        Iterator<IntervalTree.Node<String>> overlappers = it.overlappers(pos, pos);
+        Iterator<IntervalTree.Node<HashSet<String>>> overlappers = it.overlappers(pos, pos);
         if (null == overlappers) {
             return null;
         }
         ArrayList<String> matches = new ArrayList<String>();
-        while(overlappers.hasNext()) {
-           IntervalTree.Node<String> item = overlappers.next();
-           String enhancerKey = item.getValue();
-           matches.add(enhancerKeyToIdLookup.get(enhancerKey));
+        while (overlappers.hasNext()) {
+            IntervalTree.Node<HashSet<String>> item = overlappers.next();
+            HashSet<String> keySet = (HashSet<String>) item.getValue();
+            for (String enhancerKey : keySet) {
+                matches.add(enhancerKeyToIdLookup.get(enhancerKey));
+            }
         }
+
         return matches;
     }
     

@@ -29,7 +29,10 @@ import edu.usc.ksom.pphs.add_panther_enhancer.logic.ChrRangeManager;
 import edu.usc.ksom.pphs.add_panther_enhancer.logic.IdMappingManager;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 public class Snp {
@@ -47,7 +50,10 @@ public class Snp {
 
     // Results from Flanking region mapping
     private LinkedHashMap<Integer, ArrayList<String>> flankingToAnnotationLookup;
+    
+    private String workingDir;
     private boolean captureAnnotDetails = false;
+    
 
     public static final String DELIM_ADDED_ANNOTATIONS = ";";
     
@@ -350,7 +356,8 @@ public class Snp {
     }
     
     
-    public Snp(VCFHeader header, String vcfLine, boolean captureAnotDetails) {
+    public Snp(String workingDir, VCFHeader header, String vcfLine, boolean captureAnotDetails) {
+        this.workingDir = workingDir;
         this.captureAnnotDetails = captureAnotDetails;
         if (this.captureAnnotDetails) {
             this.header = header;
@@ -396,7 +403,7 @@ public class Snp {
 //
 //        }
 
-//        ExecutorService executor = Executors.newFixedThreadPool(3);
+        ExecutorService executor = Executors.newFixedThreadPool(3);
         loadToolWorker = new LoadToolAnnotations(cleanedVcfParts[header.getColumnForAnnotationColumn(Constants.COL_ANNOVAR_ENSEMBL_GENE_ID)],
                                                                         cleanedVcfParts[header.getColumnForAnnotationColumn(Constants.COL_ANNOVAR_REFSEQ_GENE_ID)],
                                                                         cleanedVcfParts[header.getColumnForAnnotationColumn(Constants.COL_SNEFF_ENSEMBL_GENE_ID)],
@@ -405,19 +412,17 @@ public class Snp {
                                                                         cleanedVcfParts[header.getColumnForAnnotationColumn(Constants.COL_VEP_REFSEQ_GENE_ID)]);
 //                                                                        cleanedVcfParts[header.getColumnForAnnotationColumn(Constants.COL_ANNOVAR_CLOSEST_ENSEMBL_GENE_ID)],
 //                                                                        cleanedVcfParts[header.getColumnForAnnotationColumn(Constants.COL_ANNOVAR_CLOSEST_REFSEQ_GENE_ID)]);
-        loadToolWorker.run();
         loadPepWorker = new LoadPepAnnotations(chromosome, position);
-        loadPepWorker.run();
-//        executor.execute(loadPepWorker);        
-        loadEnhancerWorker = new LoadEnhancerAnnotations(chromosome, position);
-        loadEnhancerWorker.run();
-//        executor.execute(loadEnhancerWorker);        
-//        executor.shutdown();
+        loadEnhancerWorker = new LoadEnhancerAnnotations(chromosome, position);        
+        executor.execute(loadToolWorker);
+        executor.execute(loadPepWorker);        
+        executor.execute(loadEnhancerWorker);        
+        executor.shutdown();
         
         // Wait until all threads finish
-//        while (!executor.isTerminated()) {
-//
-//        }
+        while (!executor.isTerminated()) {
+        
+        }
         
         PantherAnnotsForAnnovarEnsemblGeneId = loadToolWorker.PantherAnnotsForAnnovarEnsemblGeneId;
         PantherAnnotsForAnnovarRefSeqGeneId = loadToolWorker.PantherAnnotsForAnnovarRefSeqGeneId;
@@ -443,7 +448,7 @@ public class Snp {
             String current = vcfParts[i];
             String cleaned = current.trim();
             String parts[] = cleaned.split(Constants.DELIM_PANTHER_ID_PARTS);
-            ArrayList<String> validEntries = new ArrayList<String>();
+            LinkedHashSet<String> validEntries = new LinkedHashSet<String>();
             for (String part: parts) {
                 if (Constants.VCF_PLACEHOLDER_EMPTY.equals(part)) {
                     continue;
@@ -461,7 +466,25 @@ public class Snp {
                     }
                     part = String.join(Constants.VCF_DELIM_ALTERNATE, nonNoneEntries);
                 }
-                if (false == validEntries.contains(part)) {
+                // Some entries are delimited by ;
+                if (part.contains(Constants.DELIM_ID_PARTS_SEMI_COLON)) {
+                    LinkedHashSet<String> unique = new LinkedHashSet<String>();
+                    String otherParts[] = part.split(Constants.DELIM_ID_PARTS_SEMI_COLON);
+                    for (String other: otherParts) {
+                        if (other.equalsIgnoreCase(Constants.VCF_PLACEHOLDER_EMPTY)) {
+                            continue;
+                        }                       
+                        unique.add(other);
+                    }
+                    if (0 == unique.size()) {
+                        part = Constants.STR_EMPTY;
+                    }
+                    else {
+                        part = String.join(Constants.DELIM_ID_PARTS_SEMI_COLON, unique);
+                    }
+                }
+                
+                if (false == part.equalsIgnoreCase(Constants.STR_EMPTY)) {
                     validEntries.add(part);
                 }
 
@@ -579,7 +602,7 @@ public class Snp {
 //            PantherAnnotsForAnnovarRefSeqClosestGeneIdIntergenic = processEnsemblClosestRefSeq(AnnovarRefSeqClosestGeneIntergenic);
 //            if (true == captureAnnotDetails) {
 //                annotDetailsBuf = new StringBuffer();
-            IdMappingManager im = IdMappingManager.getInstance();
+            IdMappingManager im = IdMappingManager.getInstance(Snp.this.workingDir);
             Set<String> ensemblGeneIdSet = convertEnsemblGeneIdStrToSet(AnnovarEnsemblGeneId);
             Set<String> uniprotIdSet = im.getUniprotIdSetForEnsemblIdSet(ensemblGeneIdSet);
             uniprotIdMappedToAnnovarEnsemblGeneId = Utils.listToString(new ArrayList<String>(uniprotIdSet), DELIM_ADDED_ANNOTATIONS);
@@ -669,11 +692,11 @@ public class Snp {
         }
         
         ArrayList<String> processEnsemblGeneId(String ensemblGeneIdStr) {
-            return IdMappingManager.getInstance().getPantherAnnotationsForEnsembleIdSet(convertEnsemblGeneIdStrToSet(ensemblGeneIdStr), DELIM_ADDED_ANNOTATIONS);
+            return IdMappingManager.getInstance(Snp.this.workingDir).getPantherAnnotationsForEnsembleIdSet(convertEnsemblGeneIdStrToSet(ensemblGeneIdStr), DELIM_ADDED_ANNOTATIONS);
         }
 
         ArrayList<String> processRefSeqGeneId(String refSeqGeneId, Constants.AnnotationTool annotTool) {
-            IdMappingManager im = IdMappingManager.getInstance();
+            IdMappingManager im = IdMappingManager.getInstance(Snp.this.workingDir);
             if (null == refSeqGeneId || refSeqGeneId.equalsIgnoreCase(Constants.STR_EMPTY)) {
                 return im.getPantherAnnotationsForEnsembleIdSet(new HashSet<String>(), DELIM_ADDED_ANNOTATIONS);
             }
@@ -757,7 +780,7 @@ public class Snp {
         @Override
         public void run() {
             ChrRangeManager cm = ChrRangeManager.getInstance();
-            IdMappingManager im = IdMappingManager.getInstance();
+            IdMappingManager im = IdMappingManager.getInstance(Snp.this.workingDir);
             for (int i = 0; i < Constants.FLANKING_REGIONS.length; i++) {
                 HashSet<String> ensemblIdList = cm.getPepMappings(chromosome, position, Constants.FLANKING_REGIONS[i]);
                 if (null == ensemblIdList) {
@@ -795,7 +818,7 @@ public class Snp {
             if (null == enhancerIdList) {
                 enhancerIdList = new ArrayList<String>();
             }
-            IdMappingManager im = IdMappingManager.getInstance();
+            IdMappingManager im = IdMappingManager.getInstance(Snp.this.workingDir);
             HashSet<String> pantherIds = new HashSet<String>();
             HashSet<String> assayIdSet = new HashSet<String>();
             for (String enhancerId: enhancerIdList) {

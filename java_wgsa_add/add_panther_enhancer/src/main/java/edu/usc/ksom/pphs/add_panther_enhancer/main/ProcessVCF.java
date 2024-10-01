@@ -27,7 +27,6 @@ import edu.usc.ksom.pphs.add_panther_enhancer.datamodel.Snp;
 import edu.usc.ksom.pphs.add_panther_enhancer.datamodel.VCFHeader;
 import edu.usc.ksom.pphs.add_panther_enhancer.logic.ChrRangeManager;
 import edu.usc.ksom.pphs.add_panther_enhancer.logic.IdMappingManager;
-import edu.usc.ksom.pphs.add_panther_enhancer.logic.ResourceManager;
 import edu.usc.ksom.pphs.add_panther_enhancer.util.ConfigFile;
 import edu.usc.ksom.pphs.add_panther_enhancer.util.Utils;
 import java.io.BufferedReader;
@@ -63,16 +62,23 @@ public class ProcessVCF {
     public static final SimpleDateFormat DF = new java.text.SimpleDateFormat("yyyy.MM.dd G 'at' HH:mm:ss z");
     
     private Path statusFilePath;
+    private String inputDir = null;
+    private String outputDir = null;
+    private String workingDir = null;
     
-    public ProcessVCF() {
-        String statusFilePathStr = ResourceManager.PATH_WORKING + FILE_SEPARATOR + FILE_STATUS;
+    public ProcessVCF(String inputDir, String outputDir, String workingDir) {
+        this.inputDir = inputDir;
+        this.outputDir = outputDir;
+        this.workingDir = workingDir;
+        
+        String statusFilePathStr = workingDir + FILE_SEPARATOR + FILE_STATUS;
         if (false == Utils.createFile(statusFilePathStr)) {
             return;
         }
         statusFilePath = Paths.get(statusFilePathStr);
         // Initialize the data providers - Not necessary, but just for ease of debuggingg and processing
         ChrRangeManager.getInstance();
-        IdMappingManager.getInstance();
+        IdMappingManager.getInstance(this.workingDir);
         
         if (null != PROPERTY_OUTPUT_DEBUG) {
             if (true == Boolean.valueOf(PROPERTY_OUTPUT_DEBUG)) {
@@ -81,12 +87,13 @@ public class ProcessVCF {
         }
         
         processVCFFiles();
+        System.out.println("Finished processing files");
     }
     
     
     public boolean processVCFFiles() {
         try {
-            Stream<Path> files = Files.list(Paths.get(ResourceManager.PATH_INPUT_VCF));
+            Stream<Path> files = Files.list(Paths.get(this.inputDir));
             Path[] pathArray = files.toArray(size -> new Path[size]);
             ArrayList<Path> processItems = new ArrayList<Path>();
             for (Path item: pathArray) {
@@ -122,7 +129,7 @@ public class ProcessVCF {
         File vcfFile = vcfFilepath.toFile();
         String fullPath = vcfFile.getAbsolutePath();
         
-        String outVCFFilePathStr = ResourceManager.PATH_OUTPUT_VCF + FILE_SEPARATOR + fileName.toString();
+        String outVCFFilePathStr = this.outputDir + FILE_SEPARATOR + fileName.toString();
         boolean outVcfCreated = Utils.createFile(outVCFFilePathStr);
         if (false == outVcfCreated) {
             return false;
@@ -131,7 +138,7 @@ public class ProcessVCF {
         
         Path outDebugFile = null;
         if (true == outputDebufInfo) {
-            String outDebugPathStr = ResourceManager.PATH_WORKING + FILE_SEPARATOR + fileName.toString() + FILE_EXTENSION_TXT;
+            String outDebugPathStr = this.workingDir + FILE_SEPARATOR + fileName.toString() + FILE_EXTENSION_TXT;
             boolean outDebugCreated = Utils.createFile(outDebugPathStr);
             if (false == outDebugCreated) {
                 return false;
@@ -159,7 +166,7 @@ public class ProcessVCF {
             }
             line = bufReader.readLine();
             while (line != null) {              
-                Snp snp = new Snp(header, line, outputDebufInfo);
+                Snp snp = new Snp(ProcessVCF.this.workingDir, header, line, outputDebufInfo);
                 if (snp.isError()) {
                     String msg = "Unable to create SNP information for " + line + "\n";
                     Files.write(statusFilePath, msg.getBytes(), StandardOpenOption.APPEND);
@@ -191,6 +198,15 @@ public class ProcessVCF {
     }
     
     public static void main(String args[]) {
-        new ProcessVCF();
+//        new ProcessVCF("C:/projects/annoq_data_builder_add_panther_enhancer/top_med_vcf/input", "C:/projects/annoq_data_builder_add_panther_enhancer/top_med_vcf/output", "C:/projects/annoq_data_builder_add_panther_enhancer/top_med_vcf/diagnostics");
+        System.out.println("Three parameters are required:  Input directory, followed by output directory followed by working directory");
+        if (args.length < 3) {
+            System.out.println("Please specify input directory, followed by output directory followed by working directory");
+            return;
+        }
+        String inputDir = args[0];
+        String outputDir = args[1];
+        String workingDir = args[2];
+        new ProcessVCF(inputDir, outputDir, workingDir);
     }
 }
