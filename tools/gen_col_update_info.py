@@ -99,22 +99,22 @@ class ColDataProcessor:
                 str_id = str(start_id)
                 if key.find('gnomAD') >=0 and value.find('allele frequency') >=0:
                     new_lines.append(str_id + ',' + PARENT_ID_GNOM_AD + ',TRUE,' + key + ',,' + value + ',,,,,,float,TRUE,,')
-                    new_row = {'id':str_id, 'parent_id':PARENT_ID_GNOM_AD, 'leaf':'TRUE', 'detail': value, 'field_type':'float', 'keyword_searchable': 'TRUE'}
+                    new_row = {'id':str_id, 'parent_id':PARENT_ID_GNOM_AD, 'leaf':'TRUE', 'name':key, 'detail': value, 'field_type':'float', 'keyword_searchable': 'TRUE'}
                     self.table_fixed.loc[len(self.table_fixed)] = new_row
                                                                     
                 elif  key.find("gnomAD") >=0:
                     new_lines.append(str_id + ',' + PARENT_ID_GNOM_AD + ',TRUE,' + key + ',,' + value + ',,,,,,,,,')
-                    new_row = {'id':str_id, 'parent_id':PARENT_ID_GNOM_AD, 'leaf': 'TRUE',  'detail': value}
+                    new_row = {'id':str_id, 'parent_id':PARENT_ID_GNOM_AD, 'leaf': 'TRUE', 'name':key, 'detail': value}
                     self.table_fixed.loc[len(self.table_fixed)] = new_row                   
                                          
                 elif  value.find("allele frequency") >=0:
                     new_lines.append(str_id + ',,TRUE,' + key + ',,' + value + ',,,,,,float,,,')
-                    new_row = {'id':str_id, 'detail': value, 'leaf':'TRUE', 'field_type':'float'}
+                    new_row = {'id':str_id, 'detail': value, 'leaf':'TRUE', 'name':key, 'field_type':'float'}
                     self.table_fixed.loc[len(self.table_fixed)] = new_row
                     
                 else:
                     new_lines.append(str_id + ',,TRUE,' + key + ',,' + value + ',,,,,,,,,')
-                    new_row = {'id':str_id, 'detail': value, 'leaf':'TRUE'}
+                    new_row = {'id':str_id, 'detail': value, 'leaf':'TRUE', 'name':key}
                     self.table_fixed.loc[len(self.table_fixed)] = new_row
                                         
                 start_id = start_id + 1
