@@ -260,7 +260,8 @@ JSON:
 
 ## Part 3: Generate and or copy over files to be used by annoq-database, annoq-api and annoq-site
 1.  Module /java_wgsa_add generates the json term lookup file (panther_terms.json).  It will be avaiable in the diagnostics directory.  This file has to be copied into /path/to/annoq-site/src/@annoq.common/data/panther_terms.json
-2.  Update file annoq-site/metadata/annotation_tree.csv to reflect any metadata changes
+
+2.  Update file annoq-site/metadata/annotation_tree.csv to reflect any metadata changes.  Module (tools/gen_col_update_info.py) maybe used to track column changes.
 
 3.  Setup environment as follows:
 python3 -m venv env\

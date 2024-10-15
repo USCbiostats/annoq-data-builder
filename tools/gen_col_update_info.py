@@ -1,4 +1,3 @@
-##### DOES NOT WORK - DO NOT CHECK IN
 import argparse
 import pandas as pd
 import sys
@@ -198,6 +197,7 @@ def main():
     args = parse_arguments()
     processor = ColDataProcessor(args.input_csv, args.col_desc_file_path, args.output_csv, args.updated_unknown_csv, args.fixed_csv)
 
+#Different versions of annotation_tree.csv are generated.  Use the information in these files to manually update the version in https://github.com/USCbiostats/annoq-site/blob/master/metadata/annotation_tree.csv
 # updated_annotation_tree.csv should be used to overwrite https://github.com/USCbiostats/annoq-site/blob/master/metadata/annotation_tree.csv and dependant files should be re-genrated
 #python3 -m tools.gen_col_update_info --input_csv ../annoq_data/input/annotation_tree.csv --col_desc_file_path ../annoq_data/input/chr21.annotated.snp.description.txt --output_csv ../annoq_data/output/modified_updated_annotation_tree.csv --updated_unknown_ /home/muruganu/projects/temp/annoq-data-builder/annotation_tree_updated_unknown.csv       
 
