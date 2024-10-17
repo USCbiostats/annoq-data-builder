@@ -347,19 +347,30 @@ public class IdMappingManager {
                 System.out.println("Skipping enhancer to PANTHER line " + enhancerPantherLine);
                 continue;
             }
-            HashSet<String> pantherSet = lookup.get(parts[COL_ENHANCER]);
-            if (null == pantherSet) {
-                pantherSet = new HashSet<String>();
-                lookup.put(parts[COL_ENHANCER], pantherSet);
+            String enhancer = parts[COL_ENHANCER].trim();
+            String panther = parts[COL_PANTHER].trim();
+            String assay = parts[COL_ASSAY].trim();
+            if (true == enhancer.isEmpty()) {
+                continue;
             }
-            pantherSet.add(parts[COL_PANTHER]);
             
-            HashSet<String> assaySet  = enhancerToAssay.get(parts[COL_ENHANCER]);
-            if (null == assaySet) {
-                assaySet = new HashSet<String>();
-                enhancerToAssay.put(parts[COL_ENHANCER], assaySet);
+            if (false == panther.isEmpty()) {
+                HashSet<String> pantherSet = lookup.get(enhancer);
+                if (null == pantherSet) {
+                    pantherSet = new HashSet<String>();
+                    lookup.put(enhancer, pantherSet);
+                }
+                pantherSet.add(panther);
             }
-            assaySet.add(parts[COL_ASSAY]);            
+            
+            if (false == assay.isEmpty()) {
+                HashSet<String> assaySet  = enhancerToAssay.get(enhancer);
+                if (null == assaySet) {
+                    assaySet = new HashSet<String>();
+                    enhancerToAssay.put(enhancer, assaySet);
+                }
+                assaySet.add(assay);
+            }
         }
 
         enhancerToPantherLookup = convertValueToArrayList(lookup);
