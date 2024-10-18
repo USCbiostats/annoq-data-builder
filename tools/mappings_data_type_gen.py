@@ -69,7 +69,7 @@ def main():
 
 
     write_to_pickle(properties, output_pkl)
-    //write_to_json(properties, "pickle_in_json_format")
+    #write_to_json(properties, "pickle_in_json_format")
     write_to_json(column_values, output_annot_tree)
 
 def nested_dict(): return defaultdict(nested_dict)
