@@ -3,7 +3,8 @@
 ## Checkout module
 
 ## Load modules to build and run application
-module load intel<br>
+module load legacy/CentOS7<br>
+module load intel/19.0.4<br>
 module load maven/3.6.3<br>
 module load jdk<br>
 
