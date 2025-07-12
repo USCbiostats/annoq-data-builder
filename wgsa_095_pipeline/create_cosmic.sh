@@ -12,7 +12,7 @@ read -s -p psword
 
 #token= echo 'email:psword' | base64
 
-token= echo 'mushayah@usc.edu:6675Tm++' | base64
+token= echo 'myemail@my.edu:mypassword' | base64
 
 echo \n $token
 
