@@ -57,6 +57,8 @@ class AnnoqTreeProcessor:
                             "ignore_above": 10000
                         }
                     }
+            else:
+                print("No field type specified for " + row['id'] + " with name " + row['name'] + " Ensure this is expected.")    
         return mappings
 
     @staticmethod
@@ -81,6 +83,7 @@ def main():
 
     processor = AnnoqTreeProcessor(args.input_csv)
     processor.add_value_type()
+    print("There are " + str(len(processor.tree_df)) + " rows of data")
 
     # Writing DataFrame to CSV
     csv_data = processor.to_csv_data()
