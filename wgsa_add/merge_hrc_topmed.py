@@ -5,7 +5,7 @@ merge_hrc_topmed.py
 
 WHAT:
     Merges HRC (v5) annotation data into TopMed chromosome VCF files by adding
-    two new columns: 'mapped_in_hrc' and 'hrc_rs_dbSNP151'. Also produces an
+    two new columns: 'Mapped_in_hrc' and 'HRC_rs_dbSNP151'. Also produces an
     information file per chromosome comparing 11 Uniprot-related columns between
     the two datasets for matched variants.
 
@@ -19,8 +19,8 @@ WHEN:
     per-chromosome .vcf output files.
 
 WHY:
-    To determine which TopMed variants also exist in the HRC dataset (mapped_in_hrc=Y),
-    carry over the HRC rs_dbSNP151 identifier (hrc_rs_dbSNP151), and compare Uniprot
+    To determine which TopMed variants also exist in the HRC dataset (Mapped_in_hrc=Y),
+    carry over the HRC rs_dbSNP151 identifier (HRC_rs_dbSNP151), and compare Uniprot
     annotation consistency between the two sources.
 
 HOW:
@@ -31,11 +31,11 @@ HOW:
       3. Stream through each row of the TopMed file:
          - If ref_hg19=ref_hg38 == 'Y':
              Look up (chr_hg19, pos_hg19, ref_hg19, alt_hg19) in the HRC dict.
-             * Found:     mapped_in_hrc = 'Y'; hrc_rs_dbSNP151 = HRC rs_dbSNP151 value
-             * Not found: mapped_in_hrc = 'N'; hrc_rs_dbSNP151 = ''
+             * Found:     Mapped_in_hrc = 'Y'; HRC_rs_dbSNP151 = HRC rs_dbSNP151 value
+             * Not found: Mapped_in_hrc = 'N'; HRC_rs_dbSNP151 = ''
              If mapped (Y): compare 11 Uniprot columns and log to info file.
          - If ref_hg19=ref_hg38 == 'N':
-             mapped_in_hrc = '.'; hrc_rs_dbSNP151 = ''
+             Mapped_in_hrc = '.'; HRC_rs_dbSNP151 = ''
       4. Write the augmented row (original columns + 2 new columns) to the output file.
       5. Write a per-chromosome info file with Uniprot comparison details.
 
@@ -54,7 +54,7 @@ import os
 import glob
 import time
 
-# The 11 Uniprot-related columns to compare when mapped_in_hrc == 'Y'
+# The 11 Uniprot-related columns to compare when Mapped_in_hrc == 'Y'
 UNIPROT_COMPARE_COLS = [
     'Uniprot_acc',
     'Uniprot_entry',
@@ -142,7 +142,7 @@ def process_chromosome(hrc_file, topmed_file, output_file, info_file):
         col_idx = {name: i for i, name in enumerate(headers)}
 
         # Write output header with new columns
-        fout.write(header_line + '\t' + 'mapped_in_hrc' + '\t' + 'hrc_rs_dbSNP151' + '\n')
+        fout.write(header_line + '\t' + 'Mapped_in_hrc' + '\t' + 'HRC_rs_dbSNP151' + '\n')
 
         # Write info file header
         info_header_parts = [
@@ -187,7 +187,7 @@ def process_chromosome(hrc_file, topmed_file, output_file, info_file):
                 hrc_entry = hrc_lookup.get(key)
 
                 if hrc_entry is not None:
-                    mapped_in_hrc = 'Y'
+                    Mapped_in_hrc = 'Y'
                     hrc_rs = hrc_entry['rs_dbSNP151'] if hrc_entry['rs_dbSNP151'] else ''
                     mapped_y += 1
 
@@ -211,16 +211,16 @@ def process_chromosome(hrc_file, topmed_file, output_file, info_file):
 
                     finfo.write('\t'.join(info_parts) + '\n')
                 else:
-                    mapped_in_hrc = 'N'
+                    Mapped_in_hrc = 'N'
                     hrc_rs = ''
                     mapped_n += 1
             else:
                 # ref_hg19=ref_hg38 is 'N' (or anything else)
-                mapped_in_hrc = '.'
+                Mapped_in_hrc = '.'
                 hrc_rs = ''
                 mapped_dot += 1
 
-            fout.write(line.rstrip('\n') + '\t' + mapped_in_hrc + '\t' + hrc_rs + '\n')
+            fout.write(line.rstrip('\n') + '\t' + Mapped_in_hrc + '\t' + hrc_rs + '\n')
 
     elapsed = time.time() - start
     print(f"  Processed {total_rows} TopMed rows in {elapsed:.1f}s")
@@ -317,8 +317,8 @@ def main():
         print()
 
     # Report percentage of matches for all Uniprot comparisons across all chromosomes
-    print("Uniprot comparison match percentages (across all mapped_in_hrc=Y variants):")
-    print(f"  Total mapped_in_hrc=Y variants compared: {total_mapped_y}")
+    print("Uniprot comparison match percentages (across all Mapped_in_hrc=Y variants):")
+    print(f"  Total Mapped_in_hrc=Y variants compared: {total_mapped_y}")
     if total_mapped_y > 0:
         for col in UNIPROT_COMPARE_COLS:
             pct = 100.0 * total_match_counts[col] / total_mapped_y
