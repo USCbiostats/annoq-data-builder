@@ -20,18 +20,18 @@ WHEN:
 
 WHY:
     To determine which TopMed variants also exist in the HRC dataset (mapped_in_hrc=Y),
-    carry over the HRC rs_dbSNP identifier (hrc_rs_dbSNP151), and compare Uniprot
+    carry over the HRC rs_dbSNP151 identifier (hrc_rs_dbSNP151), and compare Uniprot
     annotation consistency between the two sources.
 
 HOW:
     For each chromosome .vcf file found in the TopMed directory:
       1. Find the matching HRC file (same filename) in the HRC directory.
       2. Build an in-memory lookup dictionary from the HRC file keyed on
-         (chr, pos, ref, alt) -> {rs_dbSNP, 11 Uniprot columns}.
+         (chr, pos, ref, alt) -> {rs_dbSNP151, 11 Uniprot columns}.
       3. Stream through each row of the TopMed file:
          - If ref_hg19=ref_hg38 == 'Y':
              Look up (chr_hg19, pos_hg19, ref_hg19, alt_hg19) in the HRC dict.
-             * Found:     mapped_in_hrc = 'Y'; hrc_rs_dbSNP151 = HRC rs_dbSNP value
+             * Found:     mapped_in_hrc = 'Y'; hrc_rs_dbSNP151 = HRC rs_dbSNP151 value
              * Not found: mapped_in_hrc = 'N'; hrc_rs_dbSNP151 = ''
              If mapped (Y): compare 11 Uniprot columns and log to info file.
          - If ref_hg19=ref_hg38 == 'N':
@@ -73,7 +73,7 @@ UNIPROT_COMPARE_COLS = [
 def build_hrc_lookup(hrc_file):
     """
     Read the HRC file and build a dictionary keyed on (chr, pos, ref, alt).
-    Values are: {'rs_dbSNP': ..., 'Uniprot_acc': ..., ...} for the relevant columns.
+    Values are: {'rs_dbSNP151': ..., 'Uniprot_acc': ..., ...} for the relevant columns.
     """
     lookup = {}
     with open(hrc_file, 'r') as f:
@@ -82,7 +82,7 @@ def build_hrc_lookup(hrc_file):
         col_idx = {name: i for i, name in enumerate(headers)}
 
         # Validate required columns exist
-        required = ['chr', 'pos', 'ref', 'alt', 'rs_dbSNP'] + UNIPROT_COMPARE_COLS
+        required = ['chr', 'pos', 'ref', 'alt', 'rs_dbSNP151'] + UNIPROT_COMPARE_COLS
         for col in required:
             if col not in col_idx:
                 print(f"  WARNING: Column '{col}' not found in HRC file {hrc_file}")
@@ -92,14 +92,14 @@ def build_hrc_lookup(hrc_file):
         pos_i = col_idx['pos']
         ref_i = col_idx['ref']
         alt_i = col_idx['alt']
-        rs_i = col_idx['rs_dbSNP']
+        rs_i = col_idx['rs_dbSNP151']
         uniprot_indices = {col: col_idx[col] for col in UNIPROT_COMPARE_COLS}
 
         line_count = 0
         for line in f:
             fields = line.rstrip('\n').split('\t')
             key = (fields[chr_i], fields[pos_i], fields[ref_i], fields[alt_i])
-            entry = {'rs_dbSNP': fields[rs_i] if rs_i < len(fields) else ''}
+            entry = {'rs_dbSNP151': fields[rs_i] if rs_i < len(fields) else ''}
             for col, idx in uniprot_indices.items():
                 entry[col] = fields[idx] if idx < len(fields) else ''
             lookup[key] = entry
@@ -127,6 +127,9 @@ def process_chromosome(hrc_file, topmed_file, output_file, info_file):
     mapped_y = 0
     mapped_n = 0
     mapped_dot = 0
+
+    # Per-column match counts for Uniprot comparisons (denominator is mapped_y)
+    match_counts = {col: 0 for col in UNIPROT_COMPARE_COLS}
 
     start = time.time()
     with open(topmed_file, 'r') as fin, \
@@ -185,7 +188,7 @@ def process_chromosome(hrc_file, topmed_file, output_file, info_file):
 
                 if hrc_entry is not None:
                     mapped_in_hrc = 'Y'
-                    hrc_rs = hrc_entry['rs_dbSNP'] if hrc_entry['rs_dbSNP'] else ''
+                    hrc_rs = hrc_entry['rs_dbSNP151'] if hrc_entry['rs_dbSNP151'] else ''
                     mapped_y += 1
 
                     # Compare 11 Uniprot columns and write to info file
@@ -202,6 +205,8 @@ def process_chromosome(hrc_file, topmed_file, output_file, info_file):
                         tm_val = fields[tm_idx] if tm_idx is not None and tm_idx < len(fields) else ''
                         hrc_val = hrc_entry.get(col, '')
                         match = 'Y' if tm_val == hrc_val else 'N'
+                        if match == 'Y':
+                            match_counts[col] += 1
                         info_parts.extend([tm_val, hrc_val, match])
 
                     finfo.write('\t'.join(info_parts) + '\n')
@@ -220,6 +225,8 @@ def process_chromosome(hrc_file, topmed_file, output_file, info_file):
     elapsed = time.time() - start
     print(f"  Processed {total_rows} TopMed rows in {elapsed:.1f}s")
     print(f"  Results: mapped_Y={mapped_y}, mapped_N={mapped_n}, mapped_dot={mapped_dot}")
+
+    return mapped_y, match_counts
 
 
 def extract_chr_from_filename(filename):
@@ -280,6 +287,10 @@ def main():
     print(f"Found {len(topmed_files)} TopMed file(s) and {len(hrc_files)} HRC file(s)")
     print()
 
+    # Accumulate Uniprot match statistics across all chromosomes
+    total_mapped_y = 0
+    total_match_counts = {col: 0 for col in UNIPROT_COMPARE_COLS}
+
     # Process each chromosome
     for topmed_file in topmed_files:
         basename = os.path.basename(topmed_file)
@@ -298,8 +309,23 @@ def main():
         output_file = os.path.join(output_dir, basename)
         info_file = os.path.join(output_dir, f"{chr_id}_uniprot_comparison_info.tsv")
 
-        process_chromosome(hrc_file, topmed_file, output_file, info_file)
+        mapped_y, match_counts = process_chromosome(
+            hrc_file, topmed_file, output_file, info_file)
+        total_mapped_y += mapped_y
+        for col in UNIPROT_COMPARE_COLS:
+            total_match_counts[col] += match_counts[col]
         print()
+
+    # Report percentage of matches for all Uniprot comparisons across all chromosomes
+    print("Uniprot comparison match percentages (across all mapped_in_hrc=Y variants):")
+    print(f"  Total mapped_in_hrc=Y variants compared: {total_mapped_y}")
+    if total_mapped_y > 0:
+        for col in UNIPROT_COMPARE_COLS:
+            pct = 100.0 * total_match_counts[col] / total_mapped_y
+            print(f"  {col}: {total_match_counts[col]}/{total_mapped_y} = {pct:.2f}%")
+    else:
+        print("  No matched variants to compare.")
+    print()
 
     print("Done.")
 
