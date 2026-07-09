@@ -5,7 +5,7 @@ merge_hrc_topmed.py
 
 WHAT:
     Merges HRC (v5) annotation data into TopMed chromosome VCF files by adding
-    two new columns: 'Mapped_in_hrc' and 'HRC_rs_dbSNP151'.
+    two new columns: 'Mapped_in_HRC' and 'HRC_rs_dbSNP151'.
 
 WHERE:
     - Parameter 1 (hrc_dir):    Directory containing HRC .vcf files (e.g. v5/)
@@ -17,7 +17,7 @@ WHEN:
     per-chromosome .vcf output files.
 
 WHY:
-    To determine which TopMed variants also exist in the HRC dataset (Mapped_in_hrc=Y)
+    To determine which TopMed variants also exist in the HRC dataset (Mapped_in_HRC=Y)
     and carry over the HRC rs_dbSNP151 identifier (HRC_rs_dbSNP151).
 
 HOW:
@@ -28,10 +28,10 @@ HOW:
       3. Stream through each row of the TopMed file:
          - If ref_hg19=ref_hg38 == 'Y':
              Look up (chr_hg19, pos_hg19, ref_hg19, alt_hg19) in the HRC dict.
-             * Found:     Mapped_in_hrc = 'Y'; HRC_rs_dbSNP151 = HRC rs_dbSNP151 value
-             * Not found: Mapped_in_hrc = 'N'; HRC_rs_dbSNP151 = ''
+             * Found:     Mapped_in_HRC = 'Y'; HRC_rs_dbSNP151 = HRC rs_dbSNP151 value
+             * Not found: Mapped_in_HRC = 'N'; HRC_rs_dbSNP151 = ''
          - If ref_hg19=ref_hg38 == 'N':
-             Mapped_in_hrc = '.'; HRC_rs_dbSNP151 = ''
+             Mapped_in_HRC = '.'; HRC_rs_dbSNP151 = ''
       4. Write the augmented row (original columns + 2 new columns) to the output file.
 
 Usage:
@@ -48,6 +48,7 @@ import sys
 import os
 import glob
 import time
+import json
 
 
 def build_hrc_lookup(hrc_file):
@@ -57,8 +58,12 @@ def build_hrc_lookup(hrc_file):
 
     The key columns (chr, pos, ref, alt) and rs_dbSNP151 are required; if any is
     missing the lookup cannot be built and an empty dict is returned.
+
+    Returns a tuple of (lookup_dict, hrc_row_count) where hrc_row_count is the
+    number of data rows read from the HRC file.
     """
     lookup = {}
+    line_count = 0
     with open(hrc_file, 'r') as f:
         header_line = f.readline().rstrip('\n')
         headers = header_line.split('\t')
@@ -69,7 +74,7 @@ def build_hrc_lookup(hrc_file):
         if missing_required:
             print(f"  WARNING: Required column(s) {missing_required} not found in "
                   f"HRC file {hrc_file}; skipping this chromosome")
-            return lookup
+            return lookup, line_count
 
         chr_i = col_idx['chr']
         pos_i = col_idx['pos']
@@ -77,7 +82,6 @@ def build_hrc_lookup(hrc_file):
         alt_i = col_idx['alt']
         rs_i = col_idx['rs_dbSNP151']
 
-        line_count = 0
         for line in f:
             fields = line.rstrip('\n').split('\t')
             key = (fields[chr_i], fields[pos_i], fields[ref_i], fields[alt_i])
@@ -86,7 +90,7 @@ def build_hrc_lookup(hrc_file):
 
         print(f"  Loaded {line_count} variants into HRC lookup")
 
-    return lookup
+    return lookup, line_count
 
 
 def process_chromosome(hrc_file, topmed_file, output_file):
@@ -94,10 +98,12 @@ def process_chromosome(hrc_file, topmed_file, output_file):
     Process a single chromosome:
       - Build HRC lookup
       - Stream TopMed file, add 2 new columns, write output
+
+    Returns a dict of statistics for this chromosome.
     """
     print(f"  Building HRC lookup from: {os.path.basename(hrc_file)}")
     start = time.time()
-    hrc_lookup = build_hrc_lookup(hrc_file)
+    hrc_lookup, hrc_rows = build_hrc_lookup(hrc_file)
     print(f"  HRC lookup built in {time.time() - start:.1f}s")
 
     # Counters for summary
@@ -116,7 +122,7 @@ def process_chromosome(hrc_file, topmed_file, output_file):
         col_idx = {name: i for i, name in enumerate(headers)}
 
         # Write output header with new columns
-        fout.write(header_line + '\t' + 'Mapped_in_hrc' + '\t' + 'HRC_rs_dbSNP151' + '\n')
+        fout.write(header_line + '\t' + 'Mapped_in_HRC' + '\t' + 'HRC_rs_dbSNP151' + '\n')
 
         # Get column indices for TopMed file
         ref_eq_i = col_idx.get('ref_hg19=ref_hg38')
@@ -142,23 +148,38 @@ def process_chromosome(hrc_file, topmed_file, output_file):
                 hrc_rs = hrc_lookup.get(key)
 
                 if hrc_rs is not None:
-                    Mapped_in_hrc = 'Y'
+                    Mapped_in_HRC = 'Y'
                     mapped_y += 1
                 else:
-                    Mapped_in_hrc = 'N'
+                    Mapped_in_HRC = 'N'
                     hrc_rs = ''
                     mapped_n += 1
             else:
                 # ref_hg19=ref_hg38 is 'N' (or anything else)
-                Mapped_in_hrc = '.'
+                Mapped_in_HRC = '.'
                 hrc_rs = ''
                 mapped_dot += 1
 
-            fout.write(line.rstrip('\n') + '\t' + Mapped_in_hrc + '\t' + hrc_rs + '\n')
+            fout.write(line.rstrip('\n') + '\t' + Mapped_in_HRC + '\t' + hrc_rs + '\n')
 
     elapsed = time.time() - start
+
+    # Percentage of HRC rows relative to TopMed rows
+    hrc_vs_topmed_pct = (hrc_rows / total_rows * 100) if total_rows else 0.0
+
+    print(f"  Processed {hrc_rows} HRC rows")
     print(f"  Processed {total_rows} TopMed rows in {elapsed:.1f}s")
+    print(f"  HRC rows vs TopMed rows: {hrc_rows} / {total_rows} = {hrc_vs_topmed_pct:.2f}%")
     print(f"  Results: mapped_Y={mapped_y}, mapped_N={mapped_n}, mapped_dot={mapped_dot}")
+
+    return {
+        'hrc_rows': hrc_rows,
+        'topmed_rows': total_rows,
+        'hrc_vs_topmed_pct': round(hrc_vs_topmed_pct, 4),
+        'mapped_Y': mapped_y,
+        'mapped_N': mapped_n,
+        'mapped_dot': mapped_dot,
+    }
 
 
 def extract_chr_from_filename(filename):
@@ -219,6 +240,9 @@ def main():
     print(f"Found {len(topmed_files)} TopMed file(s) and {len(hrc_files)} HRC file(s)")
     print()
 
+    # Collect per-chromosome statistics
+    stats_by_chr = {}
+
     # Process each chromosome
     for topmed_file in topmed_files:
         basename = os.path.basename(topmed_file)
@@ -236,8 +260,17 @@ def main():
 
         output_file = os.path.join(output_dir, basename)
 
-        process_chromosome(hrc_file, topmed_file, output_file)
+        chr_stats = process_chromosome(hrc_file, topmed_file, output_file)
+        chr_stats['topmed_file'] = basename
+        chr_stats['hrc_file'] = os.path.basename(hrc_file)
+        stats_by_chr[chr_id] = chr_stats
         print()
+
+    # Write statistics JSON file
+    stats_file = os.path.join(output_dir, 'merge_hrc_topmed_stats.json')
+    with open(stats_file, 'w') as sf:
+        json.dump(stats_by_chr, sf, indent=2)
+    print(f"Wrote per-chromosome statistics to: {stats_file}")
 
     print("Done.")
 
