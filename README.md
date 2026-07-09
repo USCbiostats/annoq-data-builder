@@ -203,65 +203,31 @@ bash tools/scripts/run_pre_work.sh ./../annoq_data
 
 Ensure the annoq_data directory is correctly located relative to the script's path.
 
+## Part 2.2: Add HRC mapping columns (TOPMed only)
 
+After the functional annotations are added, the HRC mapping columns are appended to the TOPMed
+VCF files. This step applies to the **TOPMed** dataset only — it maps TOPMed hg38 variants back
+to HRC r1.1 — and is not run for the HRC dataset.
 
-
-
-
-# To Be Continued, this is Old DOc
-
-## Running Decode Pickle for visualization 
-
-'pip install -r requirements.txt
-`cd tools`
-
-Take a look in scripts/run_decode-pickle.sh and add files accordingly outside the repo
-
-Then run
-
-`sh scripts/run_decode_pickle.sh`
-
-## Running tools/coord_to_intervaltree.py
-The `coord_to_intervaltree.py` script contains wrapper classes for `IntervalTree` and `Interval` objects: `PantherIntervalTree` and `PantherInterval`. You can quickly extract TSV and JSON formatted coordinates given a HUMAN peptide FASTA `--pep_fasta` file and Reference Proteome HUMAN ID mapping `--idmapping` file:
+```bash
+python3 wgsa_add/merge_hrc_topmed.py <hrc_dir> <topmed_dir> <output_dir>
 ```
-wget ftp://ftp.ensembl.org/pub/release-80/fasta/homo_sapiens/pep/Homo_sapiens.GRCh38.pep.all.fa.gz
-wget ftp://ftp.ebi.ac.uk/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Eukaryota/UP000005640/UP000005640_9606.idmapping.gz
-gunzip Homo_sapiens.GRCh38.pep.all.fa.gz
-gunzip UP000005640_9606.idmapping.gz
-python3 tools/coord_to_intervaltree.py -p Homo_sapiens.GRCh38.pep.all.fa -i UP000005640_9606.idmapping > parsed_coords.tsv
-python3 tools/coord_to_intervaltree.py -p Homo_sapiens.GRCh38.pep.all.fa -i UP000005640_9606.idmapping --json > parsed_coords.json
-```
-### Example output
-TSV:
-```
-ENSG00000228985 14      22449113        22449125        1
-ENSG00000223997 14      22438547        22438554        1       HGNC:12254
-ENSG00000282253 CHR_HSCHR7_2_CTG6       142847306       142847317       1       HGNC:12158
-```
-JSON:
-```
-[
-    [
-        "ENSG00000228985",
-        ["14", 22449113, 22449125, "1"]
-    ],
-    [
-        "ENSG00000223997",
-        ["14", 22438547, 22438554, "1"],
-        "HGNC:12254"
-    ],
-    [
-        "ENSG00000282253",
-        ["CHR_HSCHR7_2_CTG6", 142847306, 142847317, "1"],
-        "HGNC:12158"
-    ],
-]
-```
+
+The three arguments are positional directories of per-chromosome `.vcf` files. The script matches
+each TOPMed file to the HRC file for the same chromosome, appends two columns to every TOPMed row,
+and writes `merge_hrc_topmed_stats.json` into the output directory:
+
+- `Mapped_in_HRC` — `Y` if the hg19-equivalent variant is found in HRC r1.1, `N` if not found,
+  and `.` if `ref_hg19 != ref_hg38`.
+- `HRC_rs_dbSNP151` — the HRC `rs_dbSNP151` id when `Mapped_in_HRC = Y`, otherwise empty.
+
+These two fields must then be added to `annoq-site/metadata/annotation_tree.csv` under **HG19 Info**
+(see Part 3).
 
 ## Part 3: Generate and or copy over files to be used by annoq-database, annoq-api and annoq-site
 1.  Module /java_wgsa_add generates the json term lookup file (panther_terms.json).  It will be avaiable in the diagnostics directory.  This file has to be copied into /path/to/annoq-site/src/@annoq.common/data/panther_terms.json
 
-2.  Update file annoq-site/metadata/annotation_tree.csv to reflect any metadata changes.  Module (tools/gen_col_update_info.py) maybe used to track column changes.
+2.  Update file annoq-site/metadata/annotation_tree.csv to reflect any metadata changes, including the HRC mapping fields (Mapped_in_HRC, HRC_rs_dbSNP151) added in Part 2.2, placed under HG19 Info.  Module (tools/gen_col_update_info.py) maybe used to track column changes.
 
 3.  Setup environment as follows:
 python3 -m venv env\
@@ -270,7 +236,7 @@ pip3 install -r requirements.txt
 
 
 #### Part 3.1 Generate json and mappings files and copy over
-python3 -m tools.annotation_tree_gen --input_csv /path/to/annoq-site/metadata/annotation_tree.csv --output_csv /do/not/use/annotation_tree_output.csv --output_json /path/to/annoq-api/data/anno_tree.json --mappings_json /path/to/annoq-database/metadata/annoq_mappings.json --api_mappings_json /path/to/annoq-api-v2/data/api_mapping_anno_tree.json 
+python3 -m tools.annotation_tree_gen --input_csv /path/to/annoq-site/metadata/annotation_tree.csv --output_csv /do/not/use/annotation_tree_output.csv --output_json /path/to/annoq-api/data/anno_tree.json --mappings_json /path/to/annoq-database/data/annoq_mappings.json --api_mappings_json /path/to/annoq-api-v2/data/api_mapping_anno_tree.json 
 1.  Copy anno_tree.json into /annoq-api/data/anno_tree.json
 2.  Copy anno_tree.json into /annoq-api-v2/data/anno_tree.json
 3.  Copy api_mapping_anno_tree.json into /annoq-api-v2/data/api_mapping_anno_tree.json
