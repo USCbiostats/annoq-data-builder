@@ -96,7 +96,7 @@ The Java module requires the annotation file generated via PANTHER API.  It can 
 3.   python3 tools/api_extractor/panther_gene_extractor.py --output panther_annot.json
 4.   copy panther_annot.json to location specified in ./annoq-data-builder/java_wgsa_add/add_panther_enhancer/src/main/resources/add_panther_enhancer.properties or modify the property to point to location of file
 
-## Part 2.2: Add HRC mapping columns (TOPMed only)
+## Part 2.1: Add HRC mapping columns (TOPMed only)
 
 After the functional annotations are added, the HRC mapping columns are appended to the TOPMed
 VCF files. This step applies to the **TOPMed** dataset only — it maps TOPMed hg38 variants back
@@ -120,7 +120,7 @@ These two fields must then be added to `annoq-site/metadata/annotation_tree.csv`
 ## Part 3: Generate and or copy over files to be used by annoq-database, annoq-api and annoq-site
 1.  Module /java_wgsa_add generates the json term lookup file (panther_terms.json).  It will be avaiable in the diagnostics directory.  This file has to be copied into /path/to/annoq-site/src/@annoq.common/data/panther_terms.json
 
-2.  Update file annoq-site/metadata/annotation_tree.csv to reflect any metadata changes, including the HRC mapping fields (Mapped_in_HRC, HRC_rs_dbSNP151) added in Part 2.2, placed under HG19 Info.  Module (tools/gen_col_update_info.py) maybe used to track column changes.
+2.  Update file annoq-site/metadata/annotation_tree.csv to reflect any metadata changes, including the HRC mapping fields (Mapped_in_HRC, HRC_rs_dbSNP151) added in Part 2.1, placed under HG19 Info.  Module (tools/gen_col_update_info.py) maybe used to track column changes.
 
 3.  Setup environment as follows:
 python3 -m venv env\
