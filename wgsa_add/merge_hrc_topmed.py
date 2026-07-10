@@ -5,7 +5,9 @@ merge_hrc_topmed.py
 
 WHAT:
     Merges HRC (v5) annotation data into TopMed chromosome VCF files by adding
-    two new columns: 'Mapped_in_HRC' and 'HRC_rs_dbSNP151'.
+    two new columns: 'Mapped_in_HRC' and 'HRC_rs_dbSNP151'. For variants that map
+    into HRC it also compares 11 Uniprot columns between the two datasets and records
+    per-column match statistics in merge_hrc_topmed_stats.json.
 
 WHERE:
     - Parameter 1 (hrc_dir):    Directory containing HRC .vcf files (e.g. v5/)
@@ -51,10 +53,28 @@ import time
 import json
 
 
+# The 11 Uniprot-related columns compared between the matched HRC and TopMed variant
+# when Mapped_in_HRC == 'Y'. Uniprot data is added upstream by the Part-2
+# add_panther_enhancer step, so these columns are present in properly-annotated VCFs.
+UNIPROT_COMPARE_COLS = [
+    'Uniprot_acc',
+    'Uniprot_entry',
+    'Uniprot_mapped_to_0_flanking_region',
+    'Uniprot_mapped_to_10000_flanking_region',
+    'Uniprot_mapped_to_20000_flanking_region',
+    'Uniprot_mapped_to_ANNOVAR_ensembl_Gene_ID',
+    'Uniprot_mapped_to_ANNOVAR_refseq_Gene_ID',
+    'Uniprot_mapped_to_SnpEff_ensembl_Gene_ID',
+    'Uniprot_mapped_to_SnpEff_refseq_Gene_ID',
+    'Uniprot_mapped_to_VEP_ensembl_Gene_ID',
+    'Uniprot_mapped_to_VEP_refseq_Gene_ID',
+]
+
+
 def build_hrc_lookup(hrc_file):
     """
     Read the HRC file and build a dictionary keyed on (chr, pos, ref, alt).
-    Values are the rs_dbSNP151 identifier.
+    Values are a dict: {'rs_dbSNP151': ..., <each present UNIPROT_COMPARE_COLS>: ...}.
 
     The key columns (chr, pos, ref, alt) and rs_dbSNP151 are required; if any is
     missing the lookup cannot be built and an empty dict is returned.
@@ -81,11 +101,20 @@ def build_hrc_lookup(hrc_file):
         ref_i = col_idx['ref']
         alt_i = col_idx['alt']
         rs_i = col_idx['rs_dbSNP151']
+        # Uniprot columns to carry for the comparison (only those present in this HRC file)
+        uniprot_indices = {col: col_idx[col] for col in UNIPROT_COMPARE_COLS if col in col_idx}
+        missing_uniprot = [col for col in UNIPROT_COMPARE_COLS if col not in col_idx]
+        if missing_uniprot:
+            print(f"  NOTE: {len(missing_uniprot)} Uniprot column(s) absent from HRC file; "
+                  f"treated as empty in the comparison: {missing_uniprot}")
 
         for line in f:
             fields = line.rstrip('\n').split('\t')
             key = (fields[chr_i], fields[pos_i], fields[ref_i], fields[alt_i])
-            lookup[key] = fields[rs_i] if rs_i < len(fields) else ''
+            entry = {'rs_dbSNP151': fields[rs_i] if rs_i < len(fields) else ''}
+            for col, idx in uniprot_indices.items():
+                entry[col] = fields[idx] if idx < len(fields) else ''
+            lookup[key] = entry
             line_count += 1
 
         print(f"  Loaded {line_count} variants into HRC lookup")
@@ -112,6 +141,9 @@ def process_chromosome(hrc_file, topmed_file, output_file):
     mapped_n = 0
     mapped_dot = 0
 
+    # Per-column exact-match counts for the Uniprot comparison (denominator = mapped_y)
+    uniprot_match_counts = {col: 0 for col in UNIPROT_COMPARE_COLS}
+
     start = time.time()
     with open(topmed_file, 'r') as fin, \
          open(output_file, 'w') as fout:
@@ -131,6 +163,9 @@ def process_chromosome(hrc_file, topmed_file, output_file):
         ref_hg19_i = col_idx.get('ref_hg19')
         alt_hg19_i = col_idx.get('alt_hg19')
 
+        # TopMed-side indices for the Uniprot columns (compared when Mapped_in_HRC == 'Y')
+        topmed_uniprot_indices = {col: col_idx.get(col) for col in UNIPROT_COMPARE_COLS}
+
         for line in fin:
             fields = line.rstrip('\n').split('\t')
             total_rows += 1
@@ -145,11 +180,21 @@ def process_chromosome(hrc_file, topmed_file, output_file):
                 alt_hg19 = fields[alt_hg19_i] if alt_hg19_i is not None and alt_hg19_i < len(fields) else ''
 
                 key = (chr_hg19, pos_hg19, ref_hg19, alt_hg19)
-                hrc_rs = hrc_lookup.get(key)
+                hrc_entry = hrc_lookup.get(key)
 
-                if hrc_rs is not None:
+                if hrc_entry is not None:
                     Mapped_in_HRC = 'Y'
+                    hrc_rs = hrc_entry.get('rs_dbSNP151', '')
                     mapped_y += 1
+
+                    # Compare the 11 Uniprot columns (exact string match) between the
+                    # TopMed row and the matched HRC variant; tally per-column matches.
+                    for col in UNIPROT_COMPARE_COLS:
+                        tm_idx = topmed_uniprot_indices[col]
+                        tm_val = fields[tm_idx] if tm_idx is not None and tm_idx < len(fields) else ''
+                        hrc_val = hrc_entry.get(col, '')
+                        if tm_val == hrc_val:
+                            uniprot_match_counts[col] += 1
                 else:
                     Mapped_in_HRC = 'N'
                     hrc_rs = ''
@@ -172,6 +217,20 @@ def process_chromosome(hrc_file, topmed_file, output_file):
     print(f"  HRC rows vs TopMed rows: {hrc_rows} / {total_rows} = {hrc_vs_topmed_pct:.2f}%")
     print(f"  Results: mapped_Y={mapped_y}, mapped_N={mapped_n}, mapped_dot={mapped_dot}")
 
+    # Per-column Uniprot match stats (denominator = Mapped_in_HRC == 'Y' variants)
+    uniprot_comparison = {
+        'compared_variants_mapped_Y': mapped_y,
+        'columns': {
+            col: {
+                'matches': uniprot_match_counts[col],
+                'match_pct': round(uniprot_match_counts[col] / mapped_y * 100, 4) if mapped_y else 0.0,
+            }
+            for col in UNIPROT_COMPARE_COLS
+        },
+    }
+    print("  Uniprot matches (of {} Mapped_in_HRC=Y): ".format(mapped_y)
+          + ", ".join("{}={}".format(col, uniprot_match_counts[col]) for col in UNIPROT_COMPARE_COLS))
+
     return {
         'hrc_rows': hrc_rows,
         'topmed_rows': total_rows,
@@ -179,6 +238,7 @@ def process_chromosome(hrc_file, topmed_file, output_file):
         'mapped_Y': mapped_y,
         'mapped_N': mapped_n,
         'mapped_dot': mapped_dot,
+        'uniprot_comparison': uniprot_comparison,
     }
 
 
