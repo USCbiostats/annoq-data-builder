@@ -1,4 +1,8 @@
 
+# LEGACY / UNUSED — helpers used only by the superseded Python annotation path
+# (add_panther_anno / add_enhancer_anno / add_annotations); not part of the current
+# pipeline. See README "Legacy / unused code".
+
 import json
 
 

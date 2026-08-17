@@ -1,3 +1,8 @@
+# LEGACY / UNUSED — not part of the current data-builder pipeline. Imported only by
+# the superseded add_annotations.py Python path; the dbNSFP cell cleanup (`.` → `""`)
+# is now performed by the Java module (java_wgsa_add/add_panther_enhancer). Retained
+# for reference only. See README "Legacy / unused code".
+
 import re
 
 def remove_duplicates(input_string):

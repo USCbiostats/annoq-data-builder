@@ -85,7 +85,47 @@ Temporary files will be placed in the tmp and work directories.
 SLURM scripts can be found in the slurm directory (see scripts/sbatch.temp).
 
 
-## Part 2: AnnoQ Adding PANTHER and ENHANCER annotations
+## Part 2: Add HRC mapping columns (TOPMed only) — run after WGSA, before Part 3
+
+Run this **immediately after WGSA (Part 1) and before the Part-3 PANTHER/GO/Reactome/enhancer
+step**. It applies to the **TOPMed** dataset only — it maps TOPMed hg38 variants back to HRC r1.1
+(hg19) — and is not run for the HRC dataset. Because it runs before the functional-annotation step,
+it does **not** read or compare any PANTHER/Uniprot columns.
+
+```bash
+python3 wgsa_add/merge_hrc_topmed.py <hrc_dir> <topmed_dir> <output_dir>
+```
+
+- `hrc_dir` — the **raw HRC r1.1 reference VCFs**, one per chromosome (e.g. `18.vcf`; standard
+  8-column VCF `CHROM POS ID REF ALT QUAL FILTER INFO`, hg19, bare chromosome `18`).
+- `topmed_dir` — the TOPMed WGSA-output `.vcf` files.
+- `output_dir` — merged output; also gets `merge_hrc_topmed_stats.json` (mapping counts only).
+
+**SNPs only** — indels and multiallelic rows are ignored. The script matches each TOPMed file to
+the HRC VCF for the same chromosome and appends **four** columns to every row:
+
+- `chr_pos` — hg38 `chr:pos`, always populated (basic info).
+- `Mapped_in_HRC` — `Y` if the hg19-equivalent SNP is in HRC r1.1, `N` if not found, `.` if
+  `ref_hg19 != ref_hg38`.
+- `HRC_chr_pos` — hg19 `chr:pos` when `Mapped_in_HRC = Y`, else empty (HG19 info).
+- `HRC_chr_pos_ref_alt` — hg19 `chr:posREF>ALT` (e.g. `18:10005A>T`) when `Mapped_in_HRC = Y`,
+  else empty (HG19 info).
+
+The HRC rsID is **not** carried: the raw HRC ID column never provides an rsID that TOPMed's own
+`rs_dbSNP` lacks (verified on chr18), so HRC-by-RSID search uses `rs_dbSNP` + `Mapped_in_HRC=Y`.
+
+These fields must then be registered in `annoq-site/metadata/annotation_tree.csv` — `chr_pos` under
+basic info, and the three HRC/HG19 fields under **HG19 Info** (see Part 4).
+
+> **Ordering invariant:** the Part-3 PANTHER/enhancer (Java) module also performs the dbNSFP cell
+> cleanup (`.` → `""`). It must run **after** this merge and **before** VCF→JSON conversion, so the
+> raw WGSA `.` markers in numeric fields are cleaned before indexing — otherwise Elasticsearch
+> rejects every document (`mapper_parsing_exception`, `count=0`).
+
+## Part 3: AnnoQ Adding PANTHER, GO, Reactome and ENHANCER annotations
+
+Run this **after** the Part-2 HRC merge (TOPMed) — for the HRC dataset it runs directly after Part 1.
+
 The Java Module in /java_wgsa_add can be used to add the PANTHER and Enhancer annotations
 The Java module requires the annotation file generated via PANTHER API.  It can be generated as follows:
 1.    cd  annoq-data-builder
@@ -96,31 +136,10 @@ The Java module requires the annotation file generated via PANTHER API.  It can 
 3.   python3 tools/api_extractor/panther_gene_extractor.py --output panther_annot.json
 4.   copy panther_annot.json to location specified in ./annoq-data-builder/java_wgsa_add/add_panther_enhancer/src/main/resources/add_panther_enhancer.properties or modify the property to point to location of file
 
-## Part 2.1: Add HRC mapping columns (TOPMed only)
-
-After the functional annotations are added, the HRC mapping columns are appended to the TOPMed
-VCF files. This step applies to the **TOPMed** dataset only — it maps TOPMed hg38 variants back
-to HRC r1.1 — and is not run for the HRC dataset.
-
-```bash
-python3 wgsa_add/merge_hrc_topmed.py <hrc_dir> <topmed_dir> <output_dir>
-```
-
-The three arguments are positional directories of per-chromosome `.vcf` files. The script matches
-each TOPMed file to the HRC file for the same chromosome, appends two columns to every TOPMed row,
-and writes `merge_hrc_topmed_stats.json` into the output directory:
-
-- `Mapped_in_HRC` — `Y` if the hg19-equivalent variant is found in HRC r1.1, `N` if not found,
-  and `.` if `ref_hg19 != ref_hg38`.
-- `HRC_rs_dbSNP151` — the HRC `rs_dbSNP151` id when `Mapped_in_HRC = Y`, otherwise empty.
-
-These two fields must then be added to `annoq-site/metadata/annotation_tree.csv` under **HG19 Info**
-(see Part 3).
-
-## Part 3: Generate and or copy over files to be used by annoq-database, annoq-api and annoq-site
+## Part 4: Generate and or copy over files to be used by annoq-database, annoq-api and annoq-site
 1.  Module /java_wgsa_add generates the json term lookup file (panther_terms.json).  It will be avaiable in the diagnostics directory.  This file has to be copied into /path/to/annoq-site/src/@annoq.common/data/panther_terms.json
 
-2.  Update file annoq-site/metadata/annotation_tree.csv to reflect any metadata changes, including the HRC mapping fields (Mapped_in_HRC, HRC_rs_dbSNP151) added in Part 2.1, placed under HG19 Info.  Module (tools/gen_col_update_info.py) maybe used to track column changes.
+2.  Update file annoq-site/metadata/annotation_tree.csv to reflect any metadata changes, including the HRC mapping fields added in Part 2: Mapped_in_HRC, HRC_chr_pos and HRC_chr_pos_ref_alt under HG19 Info, and chr_pos under basic info.  Module (tools/gen_col_update_info.py) maybe used to track column changes.
 
 3.  Setup environment as follows:
 python3 -m venv env\
@@ -128,7 +147,7 @@ python3 -m venv env\
 pip3 install -r requirements.txt
 
 
-#### Part 3.1 Generate json and mappings files and copy over
+#### Part 4.1 Generate json and mappings files and copy over
 python3 -m tools.annotation_tree_gen --input_csv /path/to/annoq-site/metadata/annotation_tree.csv --output_csv /do/not/use/annotation_tree_output.csv --output_json /path/to/annoq-api/data/anno_tree.json --mappings_json /path/to/annoq-database/data/annoq_mappings.json --api_mappings_json /path/to/annoq-api-v2/data/api_mapping_anno_tree.json 
 1.  Copy anno_tree.json into /annoq-api/data/anno_tree.json
 2.  Copy anno_tree.json into /annoq-api-v2/data/anno_tree.json
@@ -136,6 +155,23 @@ python3 -m tools.annotation_tree_gen --input_csv /path/to/annoq-site/metadata/an
 4.  Copy annoq_mappings.json and into annoq-database/data/annoq_mappings.json
 
 DO NOT overwrite file annoq-site/metadata/annotation_tree.csv with /do/not/use/annotation_tree_output.csv since some fields may get lost
+
+## Legacy / unused code (superseded — do not use)
+
+The PANTHER/GO/Reactome/Enhancer annotations and the dbNSFP cell cleanup (`.` → `""`) are now
+produced by the **Java module** (`java_wgsa_add/add_panther_enhancer`, see Part 3). An older
+**Python annotation path** in `wgsa_add/` predates it and is **no longer part of the pipeline** —
+retained for reference only, not invoked by `run_work.sh` / Part 3:
+
+- `wgsa_add/add_annotations.py` — orchestrator (adds PANTHER + Enhancer, then cleans via `clean_line`).
+- `wgsa_add/add_panther_anno.py`, `wgsa_add/add_enhancer_anno.py` — the per-annotation adders.
+- `wgsa_add/clean_annotations.py` — cell cleanup; the Java module performs this now.
+- `wgsa_add/base.py`, `wgsa_add/utils.py` — helpers used **only** by the modules above.
+- Driver scripts: `wgsa_add/scripts/hrc_add.sh`, `hrc_add_enhancer.sh`, `hrc_add_all.sh`, `hrc_batch.template`.
+- `wgsa_add/create_sbatch.py` — orphaned SLURM-script generator (no references anywhere in the repo).
+
+Current, in-use `wgsa_add/` code: **`merge_hrc_topmed.py`** (Part 2, HRC mapping columns) and
+**`check_hrc_rsid.py`** (one-off HRC-vs-TOPMed rsID validation).
 
 python3 /path/to/annoq-data-builder/tools/mappings_data_type_gen.py --input /path/to/annoq-site/metadata/annotation_tree.csv --output /annoq-database/data/doc_type.pkl --anno_tree /do/not/use/do_not_use_anno_tree.json -d ,
 

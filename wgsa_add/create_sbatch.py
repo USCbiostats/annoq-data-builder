@@ -1,3 +1,6 @@
+# LEGACY / UNUSED — orphaned SLURM-script generator; no references anywhere in the
+# repo. Retained for reference only. See README "Legacy / unused code".
+
 import argparse
 
 parser = argparse.ArgumentParser(description='Create slurm jobs')

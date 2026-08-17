@@ -1,3 +1,7 @@
+# LEGACY / UNUSED — helpers (load_json / load_pickle) used only by the superseded
+# Python annotation path (add_annotations.py etc.); not part of the current pipeline.
+# See README "Legacy / unused code".
+
 import argparse
 from os.path import isdir, isfile, join, dirname
 import os

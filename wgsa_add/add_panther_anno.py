@@ -1,3 +1,8 @@
+# LEGACY / UNUSED — not part of the current data-builder pipeline. PANTHER/GO/Enhancer
+# annotations are now added by the Java module (java_wgsa_add/add_panther_enhancer).
+# Superseded Python annotation path, retained for reference only. See README
+# "Legacy / unused code".
+
 import argparse
 from os import path as ospath
 from collections import defaultdict

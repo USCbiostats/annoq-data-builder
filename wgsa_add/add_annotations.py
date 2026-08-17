@@ -1,3 +1,10 @@
+# LEGACY / UNUSED — not part of the current data-builder pipeline. The
+# PANTHER/GO/Enhancer annotations + dbNSFP cell cleanup are now done by the Java
+# module (java_wgsa_add/add_panther_enhancer). This Python annotation path
+# (add_annotations / add_panther_anno / add_enhancer_anno / clean_annotations + base
+# + utils + wgsa_add/scripts/hrc_*.sh) is superseded, retained for reference only.
+# See README "Legacy / unused code".
+
 import argparse
 from os import path as ospath
 from collections import defaultdict

@@ -1,4 +1,9 @@
 
+# LEGACY / UNUSED — not part of the current data-builder pipeline. Enhancer
+# annotations are now added by the Java module (java_wgsa_add/add_panther_enhancer).
+# Superseded Python annotation path, retained for reference only. See README
+# "Legacy / unused code".
+
 import argparse
 from wgsa_add.utils import *
 from wgsa_add.base import load_json
