@@ -135,6 +135,18 @@ The Java module requires the annotation file generated via PANTHER API.  It can 
      * pip3 install -r requirements.txt
 3.   python3 tools/api_extractor/panther_gene_extractor.py --output panther_annot.json
 4.   copy panther_annot.json to location specified in ./annoq-data-builder/java_wgsa_add/add_panther_enhancer/src/main/resources/add_panther_enhancer.properties or modify the property to point to location of file
+5.   Set `genome.build` in `./annoq-data-builder/java_wgsa_add/add_panther_enhancer/src/main/resources/add_panther_enhancer.properties`
+     to match the input build — `hg38` for TOPMed, `hg19` for HRC.
+
+     For **hg38** this enables a gene-symbol fallback for the `ANNOVAR_ensembl_Gene_ID` column.
+     WGSA hg38 output mixes Ensembl gene ids and HGNC gene symbols in that column (e.g.
+     `LINC02564|ENSG00000263305` at chr18:10090, `TUBB8B` at chr18:43621); without the fallback the
+     symbol tokens are silently dropped and those variants lose their PANTHER/GO/Reactome
+     annotations. On chr6:0-36Mb, 82.6% of non-empty cells in this column contain at least one
+     gene symbol. hg19/HRC output contains no such tokens, so the setting has no effect there.
+
+     Note: enabling this changes annotation **values** (not the column set) for hg38, so an hg38
+     Elasticsearch index built before this change must be rebuilt.
 
 ## Part 4: Generate and or copy over files to be used by annoq-database, annoq-api and annoq-site
 1.  Module /java_wgsa_add generates the json term lookup file (panther_terms.json).  It will be avaiable in the diagnostics directory.  This file has to be copied into /path/to/annoq-site/src/@annoq.common/data/panther_terms.json

@@ -116,6 +116,12 @@ public class Constants {
     public static final String DELIM_PANTHER_ID_PARTS = "\\|";
     public static final String DELIM_PANTHER_VALUE_PARTS = "\\|";
     public static final String VCF_PLACEHOLDER_EMPTY = ".";
+
+    // Genome build of the input WGSA VCF files.  hg38 (TOPMed) output mixes Ensembl gene ids and
+    // HGNC gene symbols in the ANNOVAR_ensembl_Gene_ID column; hg19 (HRC) output does not.
+    public static final String PROPERTY_GENOME_BUILD = "genome.build";
+    public static final String GENOME_BUILD_HG38 = "hg38";
+    public static final String GENOME_BUILD_HG19 = "hg19";
     public static final String VCF_NONE_ENTRY = "NONE:NONE(dist=NONE)";
     public static final String VCF_DELIM_ALTERNATE = ",";
     public static final String DELIM_ID_PARTS_SEMI_COLON = ";";

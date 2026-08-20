@@ -23,6 +23,8 @@ package edu.usc.ksom.pphs.add_panther_enhancer.datamodel;
 
 import edu.usc.ksom.pphs.add_panther_enhancer.constants.Constants;
 import edu.usc.ksom.pphs.add_panther_enhancer.util.Utils;
+import edu.usc.ksom.pphs.add_panther_enhancer.util.AnnovarGeneIdParser;
+import edu.usc.ksom.pphs.add_panther_enhancer.util.ConfigFile;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import edu.usc.ksom.pphs.add_panther_enhancer.logic.ChrRangeManager;
@@ -74,7 +76,15 @@ public class Snp {
     private String genes;
     private String assays;
     
-    public static final String COLS_TO_BE_ADDED[] = getColsToBeAdded();    
+    public static final String COLS_TO_BE_ADDED[] = getColsToBeAdded();
+
+    // Resolved once at class load, not per SNP: Snp is constructed for every VCF line.
+    private static final boolean GENE_NAME_FALLBACK_ENABLED = isGeneNameFallbackEnabled();
+
+    private static boolean isGeneNameFallbackEnabled() {
+        String build = ConfigFile.getProperty(Constants.PROPERTY_GENOME_BUILD);
+        return null != build && Constants.GENOME_BUILD_HG38.equalsIgnoreCase(build.trim());
+    }
     
     private static String[] getColsToBeAdded() {
         ArrayList<String> addedCols = new ArrayList<String>();
@@ -592,18 +602,12 @@ public class Snp {
 
         @Override
         public void run() {
-            PantherAnnotsForAnnovarEnsemblGeneId = processEnsemblGeneId(AnnovarEnsemblGeneId);
-            PantherAnnotsForAnnovarRefSeqGeneId = processRefSeqGeneId(AnnovarRefSeqGeneId, Constants.AnnotationTool.ANNOVAR);
-            PantherAnnotsForSnpEffEnsemblGeneId = processEnsemblGeneId(SnpEffEnsemblGeneId);
-            PantherAnnotsForSnpEffRefSeqGeneId = processRefSeqGeneId(SnpEffRefSeqGeneId, Constants.AnnotationTool.SNEFF);
-            PantherAnnotsForVepEnsemblGeneId = processEnsemblGeneId(VepEnsemblGeneId);
-            PantherAnnotsForVepRefSeqGeneId = processRefSeqGeneId(VepRefSeqGeneId, Constants.AnnotationTool.VEP);
 //            PantherAnnotsForAnnovarEnsemblClosestGeneIdIntergenic = processEnsemblClosestGeneId(AnnovarEnsemblClosestGeneIntergenic);
 //            PantherAnnotsForAnnovarRefSeqClosestGeneIdIntergenic = processEnsemblClosestRefSeq(AnnovarRefSeqClosestGeneIntergenic);
 //            if (true == captureAnnotDetails) {
 //                annotDetailsBuf = new StringBuffer();
             IdMappingManager im = IdMappingManager.getInstance(Snp.this.workingDir);
-            Set<String> ensemblGeneIdSet = convertEnsemblGeneIdStrToSet(AnnovarEnsemblGeneId);
+            Set<String> ensemblGeneIdSet = resolveAnnovarEnsemblGeneIdToEnsemblIdSet(AnnovarEnsemblGeneId);
             Set<String> uniprotIdSet = im.getUniprotIdSetForEnsemblIdSet(ensemblGeneIdSet);
             uniprotIdMappedToAnnovarEnsemblGeneId = Utils.listToString(new ArrayList<String>(uniprotIdSet), DELIM_ADDED_ANNOTATIONS);
             PantherAnnotsForAnnovarEnsemblGeneId = im.getPantherAnnotationsForUniprotIdSet(uniprotIdSet, DELIM_ADDED_ANNOTATIONS);
@@ -668,7 +672,43 @@ public class Snp {
             }
             return ensemblIdSet;
         }
-        
+
+        /**
+         * Resolves an ANNOVAR_ensembl_Gene_ID cell to a set of Ensembl gene ids.
+         *
+         * WGSA hg38 (TOPMed) output mixes Ensembl gene ids and HGNC gene symbols in this column.
+         * Ensembl gene ids are used directly; any other token is looked up as an HGNC gene symbol.
+         * Tokens are never split on '-' - see AnnovarGeneIdParser.
+         *
+         * When the input is not hg38 this delegates to the original parsing, unchanged.
+         */
+        Set<String> resolveAnnovarEnsemblGeneIdToEnsemblIdSet(String annovarEnsemblGeneIdStr) {
+            if (false == GENE_NAME_FALLBACK_ENABLED) {
+                return convertEnsemblGeneIdStrToSet(annovarEnsemblGeneIdStr);
+            }
+            Set<String> ensemblIdSet =
+                    AnnovarGeneIdParser.extractEnsemblGeneIds(annovarEnsemblGeneIdStr);
+            Set<String> symbolCandidates =
+                    AnnovarGeneIdParser.extractGeneSymbolCandidates(annovarEnsemblGeneIdStr);
+            if (symbolCandidates.isEmpty()) {
+                return ensemblIdSet;
+            }
+            IdMappingManager im = IdMappingManager.getInstance(Snp.this.workingDir);
+            for (String symbol : symbolCandidates) {
+                ArrayList<String> mappedEnsemblIds = im.getEnsemblIdsForSymbol(symbol);
+                if (null == mappedEnsemblIds) {
+                    continue;
+                }
+                for (String ensemblId : mappedEnsemblIds) {
+                    // HGNC rows with a blank ensembl_gene_id contribute an empty string
+                    if (false == ensemblId.isEmpty()) {
+                        ensemblIdSet.add(ensemblId);
+                    }
+                }
+            }
+            return ensemblIdSet;
+        }
+
         Set<String> parsetRefSeqGeneIdStrFromAnnovarSnpEffToSet(String refSeqGeneId) {
             HashSet<String> geneSymbolSet = new HashSet<String>();
             String parts[] = refSeqGeneId.split(DELIM_REFSEQ);
@@ -691,39 +731,6 @@ public class Snp {
             return geneSymbolSet;
         }
         
-        ArrayList<String> processEnsemblGeneId(String ensemblGeneIdStr) {
-            return IdMappingManager.getInstance(Snp.this.workingDir).getPantherAnnotationsForEnsembleIdSet(convertEnsemblGeneIdStrToSet(ensemblGeneIdStr), DELIM_ADDED_ANNOTATIONS);
-        }
-
-        ArrayList<String> processRefSeqGeneId(String refSeqGeneId, Constants.AnnotationTool annotTool) {
-            IdMappingManager im = IdMappingManager.getInstance(Snp.this.workingDir);
-            if (null == refSeqGeneId || refSeqGeneId.equalsIgnoreCase(Constants.STR_EMPTY)) {
-                return im.getPantherAnnotationsForEnsembleIdSet(new HashSet<String>(), DELIM_ADDED_ANNOTATIONS);
-            }
-
-            switch (annotTool) {    
-                case ANNOVAR:
-                case SNEFF: {
-                    
-                    //For Annovar, SNEFF refSeqGeneIds are gene Symbols
-                    return im.getPantherAnnotationsForGeneSymbolsFromAnnovarAndSneff(parsetRefSeqGeneIdStrFromAnnovarSnpEffToSet(refSeqGeneId), DELIM_ADDED_ANNOTATIONS);
-//                    HashSet<String> ensemblIdSet = new HashSet<String>();
-//                    for (String geneName: geneSymbolSet) {
-//                        ArrayList<String> ensemblIdList = im.getEnsemblIdsForSymbol(geneName);
-//                        if (null != ensemblIdList) {
-//                            ensemblIdSet.addAll(ensemblIdList);
-//                        }
-//                    }
-//                    return im.getPantherAnnotationsForEnsembleIdSet(ensemblIdSet, DELIM_ADDED_ANNOTATIONS);
-                }
-                case VEP: {
-                    // For VEP, refSeqGeneId is an entrez id.  This can be mapped in Ensembl and PANTHER
-                    return im.getPantherAnnotationsForEntrezIdSetFromVep(parseRefSeqGeneIdStrFromVep(refSeqGeneId), DELIM_ADDED_ANNOTATIONS);
-                 }
-            }
-            return null;
-        }
-
 //        ArrayList<String> processEnsemblClosestGeneId(String ensemblClosestGeneStr) {
 //            HashSet<String> ensemblIdSet = new HashSet<String>();
 //            String parts[] = ensemblClosestGeneStr.split(DELIM_ANNOVAR_CLOSEST_GENE);
