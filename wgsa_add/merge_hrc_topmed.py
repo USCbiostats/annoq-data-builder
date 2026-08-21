@@ -9,8 +9,8 @@ WHAT:
     are appended:
       - chr_pos              (basic info) : hg38 'chr:pos', ALWAYS populated.
       - Mapped_in_HRC        (hg19 info)  : 'Y' / 'N' / '.'  (see below).
-      - HRC_chr_pos          (hg19 info)  : hg19 'chr:pos'            when Mapped_in_HRC=='Y', else ''.
-      - HRC_chr_pos_ref_alt  (hg19 info)  : hg19 'chr:posREF>ALT'     when Mapped_in_HRC=='Y', else ''.
+      - HRC_chr_pos          (hg19 info)  : hg19 'chr:pos'            when Mapped_in_HRC=='Y', else '.'.
+      - HRC_chr_pos_ref_alt  (hg19 info)  : hg19 'chr:posREF>ALT'     when Mapped_in_HRC=='Y', else '.'.
                                             (e.g. 18:10005A>T — A=ref, T=alt)
 
     SNPs only. Indels and multiallelic rows in the HRC reference are ignored, so no TopMed
@@ -44,8 +44,8 @@ HOW:
     file. For each row with ref_hg19=ref_hg38 == 'Y', look up
     (chr_hg19, pos_hg19, ref_hg19, alt_hg19):
       * Found     -> Mapped_in_HRC='Y' and the two HRC_* hg19 identifiers.
-      * Not found -> Mapped_in_HRC='N', HRC_* = ''.
-    ref_hg19=ref_hg38 != 'Y'  ->  Mapped_in_HRC='.', HRC_* = ''.
+      * Not found -> Mapped_in_HRC='N', HRC_* = '.'.
+    ref_hg19=ref_hg38 != 'Y'  ->  Mapped_in_HRC='.', HRC_* = '.'.
     chr_pos (hg38) is written for every row.
 
 Usage:
@@ -67,6 +67,19 @@ import json
 
 # Columns appended to every TopMed row, in output order.
 NEW_COLUMNS = ['chr_pos', 'Mapped_in_HRC', 'HRC_chr_pos', 'HRC_chr_pos_ref_alt']
+
+# VCF missing-value placeholder, written instead of an empty string for any of the
+# appended columns that has no value.
+#
+# This is load-bearing, not cosmetic.  HRC_chr_pos and HRC_chr_pos_ref_alt are the LAST
+# two columns of the row and are unset for every variant with Mapped_in_HRC != 'Y' (the
+# majority).  Writing '' there leaves the line ending in two empty tab-separated fields,
+# and Java's String.split(regex) DISCARDS trailing empty fields -- so the Part 3 module
+# (add_panther_enhancer) counted 724 fields against a 726-column header, failed its
+# field-count check in Snp's constructor, and rejected every such variant with
+# "Unable to create SNP information for ...".  Part 3 rewrites '.' to '' during its
+# cleanup pass, so the final output is unchanged.
+MISSING = '.'
 
 
 def is_snp(ref, alt):
@@ -164,11 +177,11 @@ def process_chromosome(hrc_file, topmed_file, output_file):
             # chr_pos (hg38) — always populated
             chrom = get(fields, chr_i)
             pos = get(fields, pos_i)
-            chr_pos = f"{chrom}:{pos}" if chrom and pos else ''
+            chr_pos = f"{chrom}:{pos}" if chrom and pos else MISSING
 
-            mapped = '.'
-            hrc_chr_pos = ''
-            hrc_chr_pos_ref_alt = ''
+            mapped = MISSING
+            hrc_chr_pos = MISSING
+            hrc_chr_pos_ref_alt = MISSING
 
             if get(fields, ref_eq_i) == 'Y':
                 c19 = get(fields, chr_hg19_i)
@@ -185,7 +198,7 @@ def process_chromosome(hrc_file, topmed_file, output_file):
                     mapped = 'N'
                     mapped_n += 1
             else:
-                mapped = '.'
+                mapped = MISSING
                 mapped_dot += 1
 
             # append in NEW_COLUMNS order: chr_pos, Mapped_in_HRC, HRC_chr_pos, HRC_chr_pos_ref_alt
