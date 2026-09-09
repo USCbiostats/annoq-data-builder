@@ -123,8 +123,11 @@ the HRC VCF for the same chromosome and appends **four** columns to every row:
 The HRC rsID is **not** carried: the raw HRC ID column never provides an rsID that TOPMed's own
 `rs_dbSNP` lacks (verified on chr18), so HRC-by-RSID search uses `rs_dbSNP` + `Mapped_in_HRC=Y`.
 
-These fields must then be registered in `annoq-site/metadata/annotation_tree.csv` — `chr_pos` under
-basic info, and the three HRC/HG19 fields under **HG19 Info** (see Part 4).
+These fields must then be registered in the annotation-tree CSV — `chr_pos` under
+basic info, and the three HRC/HG19 fields under **HG19 Info** (see Part 4). Until the switchover
+the CSV lives in **both site repos**, so register them in both:
+`annoq-site/metadata/annotation_tree.csv` (authoritative until [annoq-site#78](https://github.com/USCbiostats/annoq-site/issues/78) merges to `master`)
+**and** `annoq-site-v2/metadata/annotation_tree.csv`.
 
 > **Ordering invariant:** the Part-3 PANTHER/enhancer (Java) module also performs the dbNSFP cell
 > cleanup (`.` → `""`). It must run **after** this merge and **before** VCF→JSON conversion, so the
@@ -160,7 +163,7 @@ The Java module requires the annotation file generated via PANTHER API.  It can 
 ## Part 4: Generate and or copy over files to be used by annoq-database, annoq-api-v2 and annoq-site
 1.  Module /java_wgsa_add generates the json term lookup file (panther_terms.json).  It will be avaiable in the diagnostics directory.  This file has to be copied into /path/to/annoq-site-v2/src/data/panther_terms.json (the React UI at annoq.org).  Until the TOPMed cutover (annoq-site#78) completes, also copy it into /path/to/annoq-site/src/@annoq.common/data/panther_terms.json, which serves topmed.annoq.org.
 
-2.  Update file annoq-site/metadata/annotation_tree.csv to reflect any metadata changes, including the HRC mapping fields added in Part 2: Mapped_in_HRC, HRC_chr_pos and HRC_chr_pos_ref_alt under HG19 Info, and chr_pos under basic info.  Module (tools/gen_col_update_info.py) maybe used to track column changes.
+2.  Update the annotation tree CSV to reflect any metadata changes, including the HRC mapping fields added in Part 2: Mapped_in_HRC, HRC_chr_pos and HRC_chr_pos_ref_alt under HG19 Info, and chr_pos under basic info.  Module (tools/gen_col_update_info.py) maybe used to track column changes.  Until the switchover the CSV lives in both site repos - update both /path/to/annoq-site/metadata/annotation_tree.csv (authoritative until annoq-site#78 merges to master) and /path/to/annoq-site-v2/metadata/annotation_tree.csv, and keep the two identical.
 
 3.  Setup environment as follows:
 python3 -m venv env\
@@ -169,15 +172,17 @@ pip3 install -r requirements.txt
 
 
 #### Part 4.1 Generate json and mappings files and copy over
+The generators below take ONE input CSV.  Until the switchover pass the authoritative copy, /path/to/annoq-site/metadata/annotation_tree.csv; the replica /path/to/annoq-site-v2/metadata/annotation_tree.csv must be kept in sync and becomes the input after annoq-site#78 merges to master.
 python3 -m tools.annotation_tree_gen --input_csv /path/to/annoq-site/metadata/annotation_tree.csv --output_csv /do/not/use/annotation_tree_output.csv --output_json /path/to/annoq-api-v2/data/anno_tree.json --mappings_json /path/to/annoq-database/data/annoq_mappings.json --api_mappings_json /path/to/annoq-api-v2/data/api_mapping_anno_tree.json 
 1.  Copy anno_tree.json into /annoq-api-v2/data/anno_tree.json
 2.  Copy api_mapping_anno_tree.json into /annoq-api-v2/data/api_mapping_anno_tree.json
 3.  Copy annoq_mappings.json and into annoq-database/data/annoq_mappings.json
 
-DO NOT overwrite file annoq-site/metadata/annotation_tree.csv with /do/not/use/annotation_tree_output.csv since some fields may get lost
+DO NOT overwrite file annoq-site/metadata/annotation_tree.csv (or its replica annoq-site-v2/metadata/annotation_tree.csv) with /do/not/use/annotation_tree_output.csv since some fields may get lost
 
 
 python3 /path/to/annoq-data-builder/tools/mappings_data_type_gen.py --input /path/to/annoq-site/metadata/annotation_tree.csv --output /annoq-database/data/doc_type.pkl --anno_tree /do/not/use/do_not_use_anno_tree.json -d ,
+(Same input CSV as Part 4.1: annoq-site's copy until the switchover, annoq-site-v2's after it.)
 
 copy doc_type.pkl into /annoq-database/data/doc_type.pkl
 
