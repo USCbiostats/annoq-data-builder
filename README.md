@@ -158,7 +158,7 @@ The Java module requires the annotation file generated via PANTHER API.  It can 
      Elasticsearch index built before this change must be rebuilt.
 
 ## Part 4: Generate and or copy over files to be used by annoq-database, annoq-api-v2 and annoq-site
-1.  Module /java_wgsa_add generates the json term lookup file (panther_terms.json).  It will be avaiable in the diagnostics directory.  This file has to be copied into /path/to/annoq-site/src/@annoq.common/data/panther_terms.json
+1.  Module /java_wgsa_add generates the json term lookup file (panther_terms.json).  It will be avaiable in the diagnostics directory.  This file has to be copied into /path/to/annoq-site-v2/src/data/panther_terms.json (the React UI at annoq.org).  Until the TOPMed cutover (annoq-site#78) completes, also copy it into /path/to/annoq-site/src/@annoq.common/data/panther_terms.json, which serves topmed.annoq.org.
 
 2.  Update file annoq-site/metadata/annotation_tree.csv to reflect any metadata changes, including the HRC mapping fields added in Part 2: Mapped_in_HRC, HRC_chr_pos and HRC_chr_pos_ref_alt under HG19 Info, and chr_pos under basic info.  Module (tools/gen_col_update_info.py) maybe used to track column changes.
 

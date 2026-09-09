@@ -272,4 +272,6 @@ bash -n run.sbatch && sbatch run.sbatch
    such line means a field-count mismatch (see section 1) and that variant was dropped.
 2. Output column count = input + 108.
 3. `panther_terms.json` is written to the working dir; copy it to
-   `annoq-site/src/@annoq.common/data/panther_terms.json` (Part 4).
+   `annoq-site-v2/src/data/panther_terms.json` (Part 4). Until the TOPMed cutover
+   (annoq-site#78) completes, also copy it to
+   `annoq-site/src/@annoq.common/data/panther_terms.json`, which serves topmed.annoq.org.
