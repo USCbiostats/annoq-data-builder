@@ -26,6 +26,7 @@ import edu.usc.ksom.pphs.add_panther_enhancer.util.Utils;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import edu.usc.ksom.pphs.add_panther_enhancer.logic.ChrRangeManager;
+import edu.usc.ksom.pphs.add_panther_enhancer.logic.EnhancerAnnotator;
 import edu.usc.ksom.pphs.add_panther_enhancer.logic.IdMappingManager;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -814,35 +815,16 @@ public class Snp {
 
         @Override
         public void run() {
-            ArrayList<String> enhancerIdList = ChrRangeManager.getInstance().getEnhancerMapping(chromosome, position);
-            if (null == enhancerIdList) {
-                enhancerIdList = new ArrayList<String>();
-            }
-            IdMappingManager im = IdMappingManager.getInstance(Snp.this.workingDir);
-            HashSet<String> pantherIds = new HashSet<String>();
-            HashSet<String> assayIdSet = new HashSet<String>();
-            for (String enhancerId: enhancerIdList) {
-                
-                ArrayList<String> pantherLongIds = im.getPantherIdsForEnhancer(enhancerId);
-                if (null != pantherLongIds) {
-                    pantherIds.addAll(pantherLongIds);
-                }
-
-                ArrayList<String> assayIds = im.getAasaysForEnhancer(enhancerId);
-                if (null != assayIds) {
-                    assayIdSet.addAll(assayIds);
-                }                
-            }
+            // Shared with main.ComputeEnhancerDelta so full builds and incremental updates match exactly
+            EnhancerAnnotator.Result r = EnhancerAnnotator.annotate(chromosome, position, Snp.this.workingDir);
             if (true == captureAnnotDetails) {
-                pantherIdsStr = Utils.listToString(new ArrayList(pantherIds), DELIM_ADDED_ANNOTATIONS);
-                ArrayList<String> annotList = im.getPantherAnnotationsForPantherIdSet(pantherIds, DELIM_ADDED_ANNOTATIONS);
-                annotStr = getPantherAnnotsAsStr(annotList);
-              
+                pantherIdsStr = Utils.listToString(new ArrayList(r.pantherIds), DELIM_ADDED_ANNOTATIONS);
+                annotStr = getPantherAnnotsAsStr(r.pantherAnnots);
             }
-            genes = String.join(DELIM_ADDED_ANNOTATIONS, pantherIds);
-            assays  = String.join(DELIM_ADDED_ANNOTATIONS, assayIdSet);
-            enhancerList  = String.join(DELIM_ADDED_ANNOTATIONS, enhancerIdList);            
-            pantherAnnots = im.getPantherAnnotationsForPantherIdSet(pantherIds, DELIM_ADDED_ANNOTATIONS);
+            genes = r.genes;
+            assays  = r.assays;
+            enhancerList  = r.enhancerList;
+            pantherAnnots = r.pantherAnnots;
         }
     }    
     
