@@ -43,6 +43,12 @@ public class ConfigFile {
     }
 
     public static String getProperty(String key) {
+        // A JVM system property (-Dkey=value) overrides the properties file, so runs can point
+        // at different input files without editing add_panther_enhancer.properties
+        String override = System.getProperty(key);
+        if (null != override && !override.isEmpty()) {
+            return override;
+        }
         if (rr == null) {
             return OptionConverter.substVars(m_Properties.getProperty(key), m_Properties);
         } else {

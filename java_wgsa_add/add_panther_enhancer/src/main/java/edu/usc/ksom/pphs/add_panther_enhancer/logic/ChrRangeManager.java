@@ -287,6 +287,7 @@ public class ChrRangeManager {
         IntervalTree it = chrToEnhancerTree.get(chromosome);
         if (null == it) {
             System.out.println("No tree defined for chromosome " + chromosome);
+            return null;
         }
         Iterator<IntervalTree.Node<HashSet<String>>> overlappers = it.overlappers(pos, pos);
         if (null == overlappers) {
