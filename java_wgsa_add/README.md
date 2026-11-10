@@ -165,8 +165,12 @@ target ANNOQ_ES_URL and ANNOQ_ANNOTATIONS_INDEX:
    creating a new document.<br>
    python3 -m src.convert_enhancer_delta_to_json -i /project/projname/delta_1/output -o /path/update_json -m data/doc_type.pkl --es_index &lt;index name&gt; [--max-rows 100]
 
-2. Save the current documents that will be updated (read only):<br>
-   python3 -m src.verify_enhancer_update snapshot -d /project/projname/delta_1/output -o before.jsonl [--max-rows 100]
+2. Save the current documents that will be updated, and pre-check them (read only):<br>
+   python3 -m src.verify_enhancer_update snapshot -d /project/projname/delta_1/output -o before.jsonl [--max-rows 100]<br>
+   The pre-check compares the documents in the index with the delta. It stops with exit code 2 if the update would
+   remove an item the index holds now, would change enhancer_linked_enhancer, or if a document is not in the index.
+   Any of these means the index was not loaded from the files the delta was computed from: do not apply the update.
+   already_up_to_date counts documents that already have the new values (for example, after a previous run).
 
 3. Apply the update. The script refuses to run if the index in the update files differs from ANNOQ_ANNOTATIONS_INDEX,
    and asks for confirmation (--yes to skip). Failures are written to update_failures.jsonl.<br>
