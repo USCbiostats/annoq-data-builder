@@ -182,3 +182,9 @@ target ANNOQ_ES_URL and ANNOQ_ANNOTATIONS_INDEX:
 Use the same --max-rows value in steps 1, 2 and 4. --max-rows limits each chromosome's delta file to its first N
 rows, for a small test before updating everything. Keep before.jsonl: it holds the previous values of every updated
 document.
+
+5. Roll back, if needed, by writing the snapshot back. Each document is replaced in full by its copy in before.jsonl,
+   then read back and compared with it. Use -d (and --max-rows) to restore only the documents that were updated,
+   for example only a test subset. Like update_es_json it asks for confirmation (--yes to skip).<br>
+   python3 -m src.restore_es_snapshot -b before.jsonl [-d /project/projname/delta_1/output [--max-rows 100]]<br>
+   A restore also reverts any other change made to those documents after the snapshot was taken.
